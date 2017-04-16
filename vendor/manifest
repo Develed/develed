@@ -10,6 +10,23 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/nlopes/slack",
+			"repository": "https://github.com/nlopes/slack",
+			"vcs": "git",
+			"revision": "5bdec13b7f814e15f59a846bcbc2f64cd71f7888",
+			"branch": "master",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/net/websocket",
+			"repository": "https://go.googlesource.com/net",
+			"vcs": "git",
+			"revision": "5602c733f70afc6dcec6766be0d5034d4c4f14de",
+			"branch": "master",
+			"path": "/websocket",
+			"notests": true
+		},
+		{
 			"importpath": "golang.org/x/sys/unix",
 			"repository": "https://go.googlesource.com/sys",
 			"vcs": "git",
