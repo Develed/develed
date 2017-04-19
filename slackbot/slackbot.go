@@ -1,6 +1,7 @@
 package slackbot
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/Sirupsen/logrus"
@@ -17,7 +18,7 @@ type Bot struct {
 	rtm    *slack.RTM
 	logger *logrus.Logger
 
-	actions map[string]Action
+	actions map[*regexp.Regexp]Action
 }
 
 func New(token string) *Bot {
@@ -28,7 +29,7 @@ func New(token string) *Bot {
 		client:  client,
 		rtm:     client.NewRTM(),
 		logger:  logger,
-		actions: make(map[string]Action),
+		actions: make(map[*regexp.Regexp]Action),
 	}
 
 	return bot
@@ -39,7 +40,7 @@ func (bot *Bot) Start() {
 }
 
 func (bot *Bot) RespondTo(match string, action Action) {
-	bot.actions[match] = action
+	bot.actions[regexp.MustCompile(match)] = action
 }
 
 func (bot *Bot) Message(channel string, msg string) {
@@ -90,8 +91,8 @@ func (bot *Bot) handleMsg(msg *slack.Msg) {
 	txt := bot.cleanupMsg(msg.Text)
 
 	for match, action := range bot.actions {
-		if strings.HasPrefix(txt, match) {
-			action(bot, msg)
+		if matches := match.FindAllStringSubmatch(txt, -1); matches != nil {
+			action(bot, msg, matches[0]...)
 			return
 		}
 	}

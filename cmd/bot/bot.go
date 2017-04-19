@@ -14,8 +14,8 @@ func main() {
 		bot.Message(msg.Channel, "Olà!")
 	})
 
-	bot.RespondTo("come va?", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
-		bot.Message(msg.Channel, "Tutto bene, tu?")
+	bot.RespondTo("echo (.*)", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
+		bot.Message(msg.Channel, "Hai scritto: "+args[1])
 	})
 
 	bot.Start()
