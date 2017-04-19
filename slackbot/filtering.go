@@ -26,7 +26,7 @@ func newDirectFilter(id string) *directFilter {
 
 func (f *directFilter) filter(msg *slack.Msg) bool {
 	return msg.Type == "message" &&
-		msg.SubType != "message_deleted" &&
+		(msg.SubType != "message_deleted" && msg.SubType != "bot_message") &&
 		msg.User != f.id &&
 		(strings.HasPrefix(msg.Text, "<@"+f.id+">") || strings.HasPrefix(msg.Channel, "D"))
 }

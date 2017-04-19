@@ -8,6 +8,7 @@ import (
 	"github.com/nlopes/slack"
 )
 
+type SimpleAction func(*Bot, *slack.Msg)
 type Action func(*Bot, *slack.Msg, ...string)
 
 type Bot struct {
@@ -19,6 +20,7 @@ type Bot struct {
 	logger *logrus.Logger
 
 	actions map[*regexp.Regexp]Action
+	defact  SimpleAction
 }
 
 func New(token string) *Bot {
@@ -41,6 +43,10 @@ func (bot *Bot) Start() {
 
 func (bot *Bot) RespondTo(match string, action Action) {
 	bot.actions[regexp.MustCompile(match)] = action
+}
+
+func (bot *Bot) DefaultResponse(action SimpleAction) {
+	bot.defact = action
 }
 
 func (bot *Bot) Message(channel string, msg string) {
@@ -96,6 +102,7 @@ func (bot *Bot) handleMsg(msg *slack.Msg) {
 			return
 		}
 	}
+	bot.defact(bot, msg)
 }
 
 func (bot *Bot) cleanupMsg(msg string) string {
