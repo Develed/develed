@@ -36,10 +36,7 @@ func sendResetCmd(w io.Writer) error {
 }
 
 func blitImage(img image.Image, w io.Writer) error {
-	if err := writeFull(w, imconv.FromImage(img)); err != nil {
-		return err
-	}
-	return sendResetCmd(w)
+	return writeFull(w, imconv.FromImage(img))
 }
 
 func main() {
@@ -78,6 +75,10 @@ func main() {
 		}
 
 		if err := blitImage(img, dsp); err != nil {
+			log.Errorln(err)
+		}
+
+		if err := sendResetCmd(dsp); err != nil {
 			log.Errorln(err)
 		}
 	}
