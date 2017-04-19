@@ -3,44 +3,20 @@ package main
 import (
 	"os"
 
-	log "github.com/Sirupsen/logrus"
 	"github.com/nlopes/slack"
+	"github.com/plorefice/develed/slackbot"
 )
 
 func main() {
-	bot := slack.New(os.Getenv("SLACK_BOT_TOKEN"))
+	bot := slackbot.New(os.Getenv("SLACK_BOT_TOKEN"))
 
-	if _, yes := os.LookupEnv("SLACK_BOT_DEBUG"); yes {
-		log.SetLevel(log.DebugLevel)
-		bot.SetDebug(true)
-	}
+	bot.RespondTo("ciao", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
+		bot.Message(msg.Channel, "Olà!")
+	})
 
-	rtm := bot.NewRTM()
-	go rtm.ManageConnection()
+	bot.RespondTo("come va?", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
+		bot.Message(msg.Channel, "Tutto bene, tu?")
+	})
 
-	for msg := range rtm.IncomingEvents {
-		switch ev := msg.Data.(type) {
-		case *slack.HelloEvent:
-			// Ignore hello event
-
-		case *slack.ConnectedEvent:
-			log.Infoln("Connected!")
-			log.Debugln("Infos:", ev.Info)
-			log.Debugln("Connection counter:", ev.ConnectionCount)
-
-		case *slack.MessageEvent:
-			log.Debug("Message: %v\n", ev)
-
-		case *slack.RTMError:
-			log.Errorf("Error: %s\n", ev.Error())
-
-		case *slack.InvalidAuthEvent:
-			log.Fatalln("Invalid credentials")
-			return
-
-		default:
-			// Can be used to handle custom events.
-			// See: https://github.com/danackerson/bender-slackbot
-		}
-	}
+	bot.Start()
 }
