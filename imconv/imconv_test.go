@@ -2,8 +2,12 @@ package imconv
 
 import (
 	"bytes"
+	"encoding/base64"
+	"image"
 	"image/color"
+	_ "image/png"
 	"reflect"
+	"strings"
 	"testing"
 )
 
@@ -52,4 +56,40 @@ func TestColorToPixelData(t *testing.T) {
 			t.Fatalf("Failed on %v with %v", test.pixel, data)
 		}
 	}
+}
+
+func TestFromImage(t *testing.T) {
+	dec := base64.NewDecoder(base64.StdEncoding, strings.NewReader(imgdata))
+	m, _, err := image.Decode(dec)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if !reflect.DeepEqual(FromImage(m), rawdata) {
+		t.Fatal("image data not matching")
+	}
+}
+
+const imgdata = `
+iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAHWlU
+WHRDb21tZW50AAAAAABDcmVhdGVkIHdpdGggR0lNUGQuZQcAAAAWSURBVAjXY5ZeF2bFt5Jlp9zHWz/c
+ASMMBflQQRXXAAAAAElFTkSuQmCC
+`
+
+var rawdata = []byte{
+	240, 128, 240, 128, 240, 240, 240, 128,
+	128, 240, 128, 240, 128, 240, 240, 128,
+	128, 128, 128, 240, 240, 128, 240, 240,
+
+	128, 240, 240, 128, 128, 240, 128, 240,
+	240, 240, 128, 240, 128, 240, 128, 128,
+	128, 240, 128, 128, 128, 240, 240, 240,
+
+	240, 240, 128, 128, 240, 240, 128, 128,
+	128, 240, 128, 128, 128, 240, 240, 240,
+	240, 240, 128, 240, 128, 240, 128, 128,
+
+	128, 240, 128, 240, 240, 240, 128, 240,
+	128, 128, 128, 240, 240, 128, 240, 240,
+	240, 128, 240, 128, 240, 240, 240, 128,
 }
