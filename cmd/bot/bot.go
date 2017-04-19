@@ -3,8 +3,8 @@ package main
 import (
 	"os"
 
+	"github.com/develed/develed/slackbot"
 	"github.com/nlopes/slack"
-	"github.com/plorefice/develed/slackbot"
 )
 
 func main() {

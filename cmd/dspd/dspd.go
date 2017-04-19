@@ -10,7 +10,7 @@ import (
 	"unsafe"
 
 	log "github.com/Sirupsen/logrus"
-	"github.com/plorefice/develed/imconv"
+	"github.com/develed/develed/imconv"
 )
 
 const (
