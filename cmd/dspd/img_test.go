@@ -9,7 +9,7 @@ import (
 )
 
 func testImage() (image.Image, error) {
-	rd := base64.NewDecoder(base64.StdEncoding, strings.NewReader(imgdata))
+	rd := base64.NewDecoder(base64.StdEncoding, strings.NewReader(cImageData))
 	m, _, err := image.Decode(rd)
 	if err != nil {
 		return nil, err
@@ -22,13 +22,13 @@ func testImage() (image.Image, error) {
 	return m, nil
 }
 
-const imgdata = `
+const cImageData = `
 iVBORw0KGgoAAAANSUhEUgAAAAIAAAACCAIAAAD91JpzAAAACXBIWXMAAAsTAAALEwEAmpwYAAAAHWlU
 WHRDb21tZW50AAAAAABDcmVhdGVkIHdpdGggR0lNUGQuZQcAAAAWSURBVAjXY5ZeF2bFt5Jlp9zHWz/c
 ASMMBflQQRXXAAAAAElFTkSuQmCC
 `
 
-var rawdata = []byte{
+var cRawData = []byte{
 	240, 128, 240, 128, 240, 240, 240, 128,
 	128, 240, 128, 240, 128, 240, 240, 128,
 	128, 128, 128, 240, 240, 128, 240, 240,

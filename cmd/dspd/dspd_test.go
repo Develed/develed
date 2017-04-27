@@ -18,7 +18,7 @@ func TestBlitImage(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	if !reflect.DeepEqual(dest.Bytes(), rawdata) {
+	if !reflect.DeepEqual(dest.Bytes(), cRawData) {
 		t.Fatal("mismatched data")
 	}
 }
