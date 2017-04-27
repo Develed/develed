@@ -49,8 +49,8 @@ func colorToPixelData(c color.Color) []byte {
 	}
 
 	bb.Write(convert(uint8(g)))
-	bb.Write(convert(uint8(b)))
 	bb.Write(convert(uint8(r)))
+	bb.Write(convert(uint8(b)))
 
 	return bb.Bytes()
 }
