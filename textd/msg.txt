@@ -1,0 +1,12 @@
+# Tabelle di font
+font=font6x6
+text=ciao!
+# RGB Alfa
+bg_color=0,0,0,255
+#txt_colot=
+# Effects: scroll, blink
+cmd=
+
+
+
+
