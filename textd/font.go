@@ -1,5 +1,11 @@
 package main
 
+import (
+	"image"
+	"log"
+	"os"
+)
+
 type FontMap struct {
 	row int
 	col int
@@ -16,16 +22,17 @@ type FontMgr struct {
 
 var cTable map[string]FontTable
 var cFontName string
+var cImageReader image.Image
 
 type FontInterface interface {
-	Init(fontName string)
+	Init(fontName string) image.Image
 	Width() int
 	High() int
 	Col(char rune) int
 	Row(char rune) int
 }
 
-func (f *FontMgr) Init(fontName string) {
+func (f *FontMgr) Init(fontName string) image.Image {
 
 	font6x8 := map[rune]FontMap{
 		' ': {0, 0}, '!': {0, 1}, '"': {0, 2}, '#': {0, 3}, '$': {0, 4}, '%': {0, 5},
@@ -110,6 +117,20 @@ func (f *FontMgr) Init(fontName string) {
 	}
 
 	cFontName = fontName
+
+	reader, err := os.Open("fonts/" + fontName + ".png")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer reader.Close()
+
+	// Decode fonts table.
+	cImageReader, _, err := image.Decode(reader)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return cImageReader
 }
 
 func (f *FontMgr) Width() int {
