@@ -12,6 +12,10 @@ import (
 	"io"
 )
 
+const (
+	cPreallocSize = 256 * 16 * 24 // preallocate enough space for a 256x16 image
+)
+
 type ImageSource interface {
 	Read() (image.Image, error)
 }
@@ -55,12 +59,14 @@ func (bis *Base64ImageSource) Read() (image.Image, error) {
 }
 
 type RawImageSource struct {
-	r io.Reader
+	r   io.Reader
+	buf []byte
 }
 
 func NewRawImageSource(r io.Reader) *RawImageSource {
 	return &RawImageSource{
-		r: r,
+		r:   r,
+		buf: make([]byte, cPreallocSize),
 	}
 }
 
@@ -70,12 +76,16 @@ func (ris *RawImageSource) Read() (image.Image, error) {
 		return nil, err
 	}
 
-	data := make([]byte, size)
-	if _, err := io.ReadFull(ris.r, data); err != nil {
+	// permanently increase buffer size if a bigger image is received
+	if size > uint64(len(ris.buf)) {
+		ris.buf = make([]byte, size)
+	}
+
+	if _, err := io.ReadFull(ris.r, ris.buf[:size]); err != nil {
 		return nil, err
 	}
 
-	m, _, err := image.Decode(bytes.NewReader(data))
+	m, _, err := image.Decode(bytes.NewReader(ris.buf))
 	if err != nil {
 		return nil, err
 	}
