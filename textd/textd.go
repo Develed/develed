@@ -86,13 +86,15 @@ func main() {
 			}
 		}
 
+		text := "font6x7"
 		if cfg["text"] == "" {
-			fmt.Println("Empty text..")
-			continue
+			fmt.Println("Empty text use default: font6x7")
+		} else {
+			text = cfg["text"]
 		}
 
 		// Fill frame
-		for n, key := range cfg["text"] {
+		for n, key := range text {
 			outx := n * font.Width()
 			wf := font.Width()
 			hf := font.High()
