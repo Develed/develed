@@ -18,9 +18,15 @@ func FromImage(img image.Image) []byte {
 	sz := img.Bounds().Size()
 	bb := bytes.NewBuffer(make([]byte, 0, sz.X*sz.Y*24))
 
-	for y := 0; y < sz.Y; y++ {
+	for y, invert := 0, false; y < sz.Y; y, invert = y+1, !invert {
 		for x := 0; x < sz.X; x++ {
-			bb.Write(colorToPixelData(img.At(x, y)))
+			var col color.Color
+			if invert {
+				col = img.At(sz.X-x-1, y)
+			} else {
+				col = img.At(x, y)
+			}
+			bb.Write(colorToPixelData(col))
 		}
 	}
 	return bb.Bytes()
