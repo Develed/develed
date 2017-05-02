@@ -2,9 +2,8 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	"io"
 	"os"
-	"path"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -15,19 +14,19 @@ var (
 
 func main() {
 	var sink ImageSink
+	var in io.Reader
 	var err error
 
-	if flag.Parse(); flag.NArg() < 1 {
-		fmt.Fprintf(os.Stderr, "Usage: %s FIFO\n", path.Base(os.Args[0]))
-		os.Exit(1)
+	if flag.Parse(); flag.NArg() > 0 {
+		fifo, err := os.OpenFile(flag.Arg(0), os.O_RDONLY, os.ModeNamedPipe)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer fifo.Close()
+		in = fifo
+	} else {
+		in = os.Stdin
 	}
-
-	// Actually read-only, write flag required to avoid blocking on open()
-	fifo, err := os.OpenFile(flag.Arg(0), os.O_RDWR, os.ModeNamedPipe)
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer fifo.Close()
 
 	if !*debug {
 		sink, err = NewDeviceSink("/dev/dsp")
@@ -41,12 +40,18 @@ func main() {
 		}
 	}
 
-	src := NewRawImageSource(fifo)
+	src := NewRawImageSource(in)
+
+loop:
 	for {
 		img, err := src.Read()
 		if err != nil {
-			log.Errorln(err)
-			continue
+			if err == io.EOF {
+				break loop
+			} else {
+				log.Errorln(err)
+				continue
+			}
 		}
 
 		if err := sink.Write(img); err != nil {
