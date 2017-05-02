@@ -56,20 +56,22 @@ func main() {
 		fmt.Println(cfg)
 
 		var font FontMgr
+		cfgFont := "font6x8"
 		if cfg["font"] == "" {
-			fmt.Println("No font specify")
-			continue
+			fmt.Println("No font specify use default..font6x8")
+		} else {
+			cfgFont = cfg["font"]
 		}
 
-		fontImage := font.Init(cfg["font"])
+		fontImage := font.Init(cfgFont)
 
-		var r int = 255
-		var g int = 255
-		var b int = 255
+		var r int = 0
+		var g int = 0
+		var b int = 0
 		var a int = 255
 
 		if cfg["bg_color"] == "" {
-			fmt.Println("No font specify, use default [255,255,255,255]")
+			fmt.Println("No font specify, use default [0,0,0,255]")
 		} else {
 			r, _ = strconv.Atoi(strings.Split(cfg["bg_color"], ",")[0])
 			g, _ = strconv.Atoi(strings.Split(cfg["bg_color"], ",")[1])
@@ -86,15 +88,8 @@ func main() {
 			}
 		}
 
-		text := "font6x7"
-		if cfg["text"] == "" {
-			fmt.Println("Empty text use default: font6x7")
-		} else {
-			text = cfg["text"]
-		}
-
 		// Fill frame
-		for n, key := range text {
+		for n, key := range cfg["text"] {
 			outx := n * font.Width()
 			wf := font.Width()
 			hf := font.High()
