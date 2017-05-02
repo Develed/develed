@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"encoding/gob"
 	"reflect"
 	"strings"
@@ -49,7 +50,7 @@ func TestBase64ImageSource(t *testing.T) {
 	}
 }
 
-func TestImageStream(t *testing.T) {
+func TestBase64ImageStream(t *testing.T) {
 	m, err := testImage()
 	if err != nil {
 		t.Fatal(err)
@@ -65,6 +66,52 @@ func TestImageStream(t *testing.T) {
 
 		if !reflect.DeepEqual(m, img) {
 			t.Fatal("images do not match after encoding/decoding")
+		}
+	}
+}
+
+func TestRawImageSource(t *testing.T) {
+	m, err := testImage()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	src := &bytes.Buffer{}
+	binary.Write(src, binary.LittleEndian, uint64(len(cRawImageData)))
+	src.Write(cRawImageData)
+
+	dec := NewRawImageSource(src)
+	img, err := dec.Read()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(m, img) {
+		t.Fatal("mismatched images")
+	}
+}
+
+func TestRawImageStream(t *testing.T) {
+	m, err := testImage()
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	testLen := 5
+	src := &bytes.Buffer{}
+	dec := NewRawImageSource(src)
+
+	for i := 0; i < testLen; i++ {
+		binary.Write(src, binary.LittleEndian, uint64(len(cRawImageData)))
+		src.Write(cRawImageData)
+	}
+
+	for i := 0; i < testLen; i++ {
+		img, err := dec.Read()
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !reflect.DeepEqual(m, img) {
+			t.Fatal("mismatched images")
 		}
 	}
 }
