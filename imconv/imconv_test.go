@@ -26,8 +26,9 @@ func TestColorToPixelData(t *testing.T) {
 		},
 		{
 			pixel: color.RGBA{R: 255, G: 0, B: 0},
-			data: append(bytes.Repeat([]byte{cBit0}, 16),
+			data: append(append(bytes.Repeat([]byte{cBit0}, 8),
 				bytes.Repeat([]byte{cBit1}, 8)...),
+				bytes.Repeat([]byte{cBit0}, 8)...),
 		},
 		{
 			pixel: color.RGBA{R: 0, G: 255, B: 0},
@@ -37,15 +38,15 @@ func TestColorToPixelData(t *testing.T) {
 		{
 			pixel: color.RGBA{R: 0, G: 0, B: 255},
 			data: append(append(bytes.Repeat([]byte{cBit0}, 8),
-				bytes.Repeat([]byte{cBit1}, 8)...),
 				bytes.Repeat([]byte{cBit0}, 8)...),
+				bytes.Repeat([]byte{cBit1}, 8)...),
 		},
 		{
 			pixel: color.RGBA{R: 113, G: 15, B: 15},
 			data: []byte{
 				cBit0, cBit0, cBit0, cBit0, cBit1, cBit1, cBit1, cBit1,
-				cBit0, cBit0, cBit0, cBit0, cBit1, cBit1, cBit1, cBit1,
 				cBit0, cBit1, cBit1, cBit1, cBit0, cBit0, cBit0, cBit1,
+				cBit0, cBit0, cBit0, cBit0, cBit1, cBit1, cBit1, cBit1,
 			},
 		},
 	}
@@ -78,18 +79,18 @@ ASMMBflQQRXXAAAAAElFTkSuQmCC
 
 var rawdata = []byte{
 	240, 128, 240, 128, 240, 240, 240, 128,
-	128, 240, 128, 240, 128, 240, 240, 128,
 	128, 128, 128, 240, 240, 128, 240, 240,
+	128, 240, 128, 240, 128, 240, 240, 128,
 
 	128, 240, 240, 128, 128, 240, 128, 240,
-	240, 240, 128, 240, 128, 240, 128, 128,
-	128, 240, 128, 128, 128, 240, 240, 240,
-
-	240, 240, 128, 128, 240, 240, 128, 128,
 	128, 240, 128, 128, 128, 240, 240, 240,
 	240, 240, 128, 240, 128, 240, 128, 128,
 
 	128, 240, 128, 240, 240, 240, 128, 240,
-	128, 128, 128, 240, 240, 128, 240, 240,
 	240, 128, 240, 128, 240, 240, 240, 128,
+	128, 128, 128, 240, 240, 128, 240, 240,
+
+	240, 240, 128, 128, 240, 240, 128, 128,
+	240, 240, 128, 240, 128, 240, 128, 128,
+	128, 240, 128, 128, 128, 240, 240, 240,
 }
