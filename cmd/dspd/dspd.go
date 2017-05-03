@@ -2,8 +2,10 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"io"
 	"os"
+	"path"
 
 	log "github.com/Sirupsen/logrus"
 )
@@ -11,6 +13,13 @@ import (
 var (
 	debug = flag.Bool("debug", false, "output to screen instead of /dev/dsp")
 )
+
+func init() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [opts...] [PIPE]\n", path.Base(os.Args[0]))
+		flag.PrintDefaults()
+	}
+}
 
 func main() {
 	var sink ImageSink
