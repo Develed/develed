@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"image"
 	"image/color"
-
-	"github.com/Sirupsen/logrus"
 )
 
 const (
@@ -47,16 +45,23 @@ func colorToPixelData(c color.Color) []byte {
 		return data
 	}
 
-	r, g, b, _ := c.RGBA()
+	conv := NormalizeColor(c)
 
-	// For some reason, Color.RGBA duplicates the lower 8 bits and shifts them by 8
-	if r, g, b = r>>8, g>>8, b>>8; r > 255 || g > 255 || b > 255 {
-		logrus.Warnln("Some pixel color values are longer than 8 bits:", r, g, b)
-	}
-
-	bb.Write(convert(uint8(g)))
-	bb.Write(convert(uint8(r)))
-	bb.Write(convert(uint8(b)))
+	bb.Write(convert(uint8(conv.G)))
+	bb.Write(convert(uint8(conv.R)))
+	bb.Write(convert(uint8(conv.B)))
 
 	return bb.Bytes()
+}
+
+func NormalizeColor(c color.Color) color.RGBA {
+	r, g, b, a := c.RGBA()
+
+	// For some reason, Color.RGBA duplicates the lower 8 bits and shifts them by 8
+	return color.RGBA{
+		R: uint8(r >> 8),
+		G: uint8(g >> 8),
+		B: uint8(b >> 8),
+		A: uint8(a >> 8),
+	}
 }

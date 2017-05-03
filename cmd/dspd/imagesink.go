@@ -125,8 +125,8 @@ func (ts *TermSink) Write(img image.Image) error {
 	sz := img.Bounds().Size()
 	for y := 0; y < sz.Y; y++ {
 		for x := 0; x < sz.X; x++ {
-			r, g, b, _ := img.At(x, y).RGBA()
-			if _, err := fmt.Printf("\033[48;2;%d;%d;%dm ", r, g, b); err != nil {
+			col := imconv.NormalizeColor(img.At(x, y))
+			if _, err := fmt.Printf("\033[48;2;%d;%d;%dm ", col.R, col.G, col.B); err != nil {
 				return err
 			}
 		}
