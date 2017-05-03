@@ -5,11 +5,13 @@ import (
 	"bytes"
 	"encoding/binary"
 	"flag"
+	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"io"
 	"os"
+	"path"
 	"strconv"
 	"strings"
 
@@ -20,22 +22,31 @@ var (
 	debug = flag.Bool("debug", false, "enter debug mode")
 )
 
+func init() {
+	flag.Usage = func() {
+		fmt.Fprintf(os.Stderr, "Usage: %s [opts...] [INPUT] [OUTPUT]\n", path.Base(os.Args[0]))
+		flag.PrintDefaults()
+	}
+}
+
 func main() {
 	var err error
 
 	in := os.Stdin
 	out := os.Stdout
 
-	if len(os.Args) > 1 {
-		in, err = os.OpenFile(os.Args[1], os.O_RDONLY, 0644)
+	flag.Parse()
+
+	if flag.NArg() > 0 {
+		in, err = os.OpenFile(flag.Arg(0), os.O_RDONLY, 0644)
 		if err != nil {
 			log.Fatalln(err)
 		}
 		defer in.Close()
 	}
 
-	if len(os.Args) > 2 {
-		out, err = os.OpenFile(os.Args[2], os.O_CREATE|os.O_WRONLY, 0644)
+	if flag.NArg() > 1 {
+		out, err = os.OpenFile(flag.Arg(1), os.O_CREATE|os.O_WRONLY, 0644)
 		if err != nil {
 			log.Fatalln(err)
 		}
