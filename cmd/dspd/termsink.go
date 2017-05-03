@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 	"image"
+	_ "image/jpeg"
+	_ "image/png"
 	"os"
 
 	"github.com/develed/develed/imconv"
