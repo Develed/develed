@@ -3,11 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
-	"io"
+	"net"
 	"os"
 	"path"
 
 	log "github.com/Sirupsen/logrus"
+	srv "github.com/develed/develed/services"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 var (
@@ -16,25 +19,18 @@ var (
 
 func init() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s [opts...] [PIPE]\n", path.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "Usage: %s [opts...] HOST:PORT\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 }
 
 func main() {
-	var sink ImageSink
-	var in io.Reader
+	var sink srv.ImageSinkServer
 	var err error
 
-	if flag.Parse(); flag.NArg() > 0 {
-		fifo, err := os.OpenFile(flag.Arg(0), os.O_RDONLY, os.ModeNamedPipe)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		defer fifo.Close()
-		in = fifo
-	} else {
-		in = os.Stdin
+	if flag.Parse(); flag.NArg() < 1 {
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	if !*debug {
@@ -49,22 +45,16 @@ func main() {
 		}
 	}
 
-	src := NewRawImageSource(in)
+	sock, err := net.Listen("tcp", flag.Arg(0))
+	if err != nil {
+		log.Fatalln(err)
+	}
 
-loop:
-	for {
-		img, err := src.Read()
-		if err != nil {
-			if err == io.EOF {
-				break loop
-			} else {
-				log.Errorln(err)
-				continue
-			}
-		}
+	s := grpc.NewServer()
+	srv.RegisterImageSinkServer(s, sink)
+	reflection.Register(s)
 
-		if err := sink.Write(img); err != nil {
-			log.Errorln(err)
-		}
+	if err := s.Serve(sock); err != nil {
+		log.Fatalln(err)
 	}
 }
