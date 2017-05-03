@@ -3,8 +3,8 @@ package main
 import (
 	"bufio"
 	"bytes"
-	"encoding/base64"
-	"fmt"
+	"encoding/binary"
+	"flag"
 	"image"
 	"image/color"
 	"image/png"
@@ -12,28 +12,43 @@ import (
 	"os"
 	"strconv"
 	"strings"
+
+	log "github.com/Sirupsen/logrus"
+)
+
+var (
+	debug = flag.Bool("debug", false, "enter debug mode")
 )
 
 func main() {
-	if len(os.Args) < 3 {
-		fmt.Println("Usage %s: <inputPath> <output path>", os.Args[0])
-		os.Exit(-1)
+	var err error
+
+	in := os.Stdin
+	out := os.Stdout
+
+	if len(os.Args) > 1 {
+		in, err = os.OpenFile(os.Args[1], os.O_RDONLY, 0644)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer in.Close()
 	}
 
-	inputPath := string(os.Args[1])
-	outputPath := string(os.Args[2])
-
-	cDebug := false
-	if os.Getenv("TXTDEBUG") == "1" {
-		fmt.Println("Debug Mode..")
-		cDebug = true
+	if len(os.Args) > 2 {
+		out, err = os.OpenFile(os.Args[2], os.O_CREATE|os.O_WRONLY, 0644)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer out.Close()
 	}
+
+	if *debug {
+		log.SetLevel(log.DebugLevel)
+	}
+
+	reader := bufio.NewReader(in)
 
 	for {
-		c, _ := os.OpenFile(inputPath, os.O_RDONLY, 0600)
-		defer c.Close()
-
-		reader := bufio.NewReader(c)
 		var cfgLine []string
 		var cfg = make(map[string]string, 10)
 		line, err := reader.ReadString('\n')
@@ -49,16 +64,16 @@ func main() {
 		}
 
 		if err != io.EOF {
-			fmt.Println(err)
+			log.Errorln(err)
 			continue
 		}
 
-		fmt.Println(cfg)
+		log.Debugln(cfg)
 
 		var font FontMgr
 		cfgFont := "font6x8"
 		if cfg["font"] == "" {
-			fmt.Println("No font specify use default..font6x8")
+			log.Debugln("No font specify use default..font6x8")
 		} else {
 			cfgFont = cfg["font"]
 		}
@@ -71,7 +86,7 @@ func main() {
 		var a int = 255
 
 		if cfg["bg_color"] == "" {
-			fmt.Println("No font specify, use default [0,0,0,255]")
+			log.Debugln("No font specify, use default [0,0,0,255]")
 		} else {
 			r, _ = strconv.Atoi(strings.Split(cfg["bg_color"], ",")[0])
 			g, _ = strconv.Atoi(strings.Split(cfg["bg_color"], ",")[1])
@@ -103,22 +118,12 @@ func main() {
 			}
 		}
 
-		// Export to output file
-		f, _ := os.OpenFile(outputPath, os.O_WRONLY|os.O_CREATE, 0600)
-		defer f.Close()
+		buf := &bytes.Buffer{}
+		png.Encode(buf, img)
 
-		if cDebug {
-			png.Encode(f, img)
-
-		} else {
-			buf := new(bytes.Buffer)
-			png.Encode(buf, img)
-
-			encoded := base64.StdEncoding.EncodeToString(buf.Bytes())
-			fmt.Println(encoded)
-
-			f.Write([]byte(encoded))
+		if !*debug {
+			binary.Write(out, binary.LittleEndian, uint64(buf.Len()))
 		}
-
+		out.Write(buf.Bytes())
 	}
 }
