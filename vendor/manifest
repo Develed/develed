@@ -41,8 +41,7 @@
 			"vcs": "git",
 			"revision": "18c9bb3261723cd5401db4d0c9fbc5c3b6c70fe8",
 			"branch": "master",
-			"path": "/proto",
-			"notests": true
+			"path": "/proto"
 		},
 		{
 			"importpath": "github.com/golang/protobuf/protoc-gen-go/descriptor",
@@ -54,13 +53,12 @@
 			"notests": true
 		},
 		{
-			"importpath": "github.com/golang/protobuf/ptypes/any",
+			"importpath": "github.com/golang/protobuf/ptypes",
 			"repository": "https://github.com/golang/protobuf",
 			"vcs": "git",
 			"revision": "18c9bb3261723cd5401db4d0c9fbc5c3b6c70fe8",
 			"branch": "master",
-			"path": "ptypes/any",
-			"notests": true
+			"path": "ptypes"
 		},
 		{
 			"importpath": "github.com/nlopes/slack",
@@ -167,6 +165,14 @@
 			"revision": "a6bd8cefa1811bd24b86f8902872e4e8225f74c4",
 			"branch": "master",
 			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/sync/errgroup",
+			"repository": "https://go.googlesource.com/sync",
+			"vcs": "git",
+			"revision": "de49d9dcd27d4f764488181bea099dfe6179bcf0",
+			"branch": "master",
+			"path": "/errgroup"
 		},
 		{
 			"importpath": "golang.org/x/sys/unix",
