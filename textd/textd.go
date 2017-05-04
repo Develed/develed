@@ -1,9 +1,8 @@
 package main
 
 import (
-	"bufio"
 	"bytes"
-	"encoding/binary"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"image"
@@ -12,11 +11,18 @@ import (
 	"io"
 	"os"
 	"path"
-	"strconv"
-	"strings"
 
 	log "github.com/Sirupsen/logrus"
+	srv "github.com/develed/develed/services"
+	"golang.org/x/net/context"
+	"google.golang.org/grpc"
 )
+
+type TextMsg struct {
+	Font    string  `json:"font"`
+	Text    string  `json:"text"`
+	BgColor []uint8 `json:"bg_color"`
+}
 
 var (
 	debug = flag.Bool("debug", false, "enter debug mode")
@@ -24,7 +30,7 @@ var (
 
 func init() {
 	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s [opts...] [INPUT] [OUTPUT]\n", path.Base(os.Args[0]))
+		fmt.Fprintf(os.Stderr, "Usage: %s [opts...] HOST:PORT\n", path.Base(os.Args[0]))
 		flag.PrintDefaults()
 	}
 }
@@ -32,90 +38,55 @@ func init() {
 func main() {
 	var err error
 
-	in := os.Stdin
-	out := os.Stdout
-
-	flag.Parse()
-
-	if flag.NArg() > 0 {
-		in, err = os.OpenFile(flag.Arg(0), os.O_RDONLY, 0644)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		defer in.Close()
-	}
-
-	if flag.NArg() > 1 {
-		out, err = os.OpenFile(flag.Arg(1), os.O_CREATE|os.O_WRONLY, 0644)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		defer out.Close()
+	if flag.Parse(); flag.NArg() < 1 {
+		flag.Usage()
+		os.Exit(1)
 	}
 
 	if *debug {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	reader := bufio.NewReader(in)
+	conn, err := grpc.Dial(flag.Arg(0), grpc.WithInsecure())
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer conn.Close()
 
+	c := srv.NewImageSinkClient(conn)
+	dec := json.NewDecoder(os.Stdin)
+
+loop:
 	for {
-		var cfgLine []string
-		var cfg = make(map[string]string, 10)
-		line, err := reader.ReadString('\n')
-		for err == nil {
-			if !strings.HasPrefix(line, "#") {
-				line = strings.TrimSpace(line)
-				if len(line) > 0 {
-					cfgLine = strings.Split(line, "=")
-					cfg[cfgLine[0]] = cfgLine[1]
-				}
+		msg := TextMsg{
+			Font:    "font6x8",
+			BgColor: []uint8{0, 0, 0, 255},
+		}
+
+		if err := dec.Decode(&msg); err != nil {
+			if err == io.EOF {
+				break loop
+			} else {
+				log.Errorln(err)
+				continue loop
 			}
-			line, err = reader.ReadString('\n')
 		}
-
-		if err != io.EOF {
-			log.Errorln(err)
-			continue
-		}
-
-		log.Debugln(cfg)
 
 		var font FontMgr
-		cfgFont := "font6x8"
-		if cfg["font"] == "" {
-			log.Debugln("No font specify use default..font6x8")
-		} else {
-			cfgFont = cfg["font"]
-		}
-
-		fontImage := font.Init(cfgFont)
-
-		var r int = 0
-		var g int = 0
-		var b int = 0
-		var a int = 255
-
-		if cfg["bg_color"] == "" {
-			log.Debugln("No font specify, use default [0,0,0,255]")
-		} else {
-			r, _ = strconv.Atoi(strings.Split(cfg["bg_color"], ",")[0])
-			g, _ = strconv.Atoi(strings.Split(cfg["bg_color"], ",")[1])
-			b, _ = strconv.Atoi(strings.Split(cfg["bg_color"], ",")[2])
-			a, _ = strconv.Atoi(strings.Split(cfg["bg_color"], ",")[3])
-		}
+		fontImage := font.Init(msg.Font)
 
 		// Allocate frame
 		img := image.NewRGBA(image.Rect(0, 0, 39, 9))
+		col := color.RGBA{msg.BgColor[0], msg.BgColor[1], msg.BgColor[2], msg.BgColor[3]}
 		nm := img.Bounds()
 		for y := 0; y < nm.Dy(); y++ {
 			for x := 0; x < nm.Dx(); x++ {
-				img.Set(x, y, color.RGBA{uint8(r), uint8(g), uint8(b), uint8(a)})
+				img.Set(x, y, col)
 			}
 		}
 
 		// Fill frame
-		for n, key := range cfg["text"] {
+		for n, key := range msg.Text {
 			outx := n * font.Width()
 			wf := font.Width()
 			hf := font.High()
@@ -132,9 +103,14 @@ func main() {
 		buf := &bytes.Buffer{}
 		png.Encode(buf, img)
 
-		if !*debug {
-			binary.Write(out, binary.LittleEndian, uint64(buf.Len()))
+		resp, err := c.Draw(context.Background(), &srv.DrawRequest{
+			Data: buf.Bytes(),
+		})
+		if err != nil {
+			log.Fatalln(err)
+			continue
 		}
-		out.Write(buf.Bytes())
+
+		log.Infoln(resp)
 	}
 }
