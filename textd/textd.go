@@ -4,15 +4,14 @@ import (
 	"bytes"
 	"encoding/json"
 	"flag"
-	"fmt"
 	"image"
 	"image/color"
 	"image/png"
 	"io"
 	"os"
-	"path"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/develed/develed/config"
 	srv "github.com/develed/develed/services"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
@@ -26,28 +25,24 @@ type TextMsg struct {
 
 var (
 	debug = flag.Bool("debug", false, "enter debug mode")
+	cfg   = flag.String("config", "/etc/develed.toml", "configuration file")
 )
-
-func init() {
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s [opts...] HOST:PORT\n", path.Base(os.Args[0]))
-		flag.PrintDefaults()
-	}
-}
 
 func main() {
 	var err error
 
-	if flag.Parse(); flag.NArg() < 1 {
-		flag.Usage()
-		os.Exit(1)
+	flag.Parse()
+
+	conf, err := config.Load(*cfg)
+	if err != nil {
+		log.Fatalln(err)
 	}
 
 	if *debug {
 		log.SetLevel(log.DebugLevel)
 	}
 
-	conn, err := grpc.Dial(flag.Arg(0), grpc.WithInsecure())
+	conn, err := grpc.Dial(conf.DSPD.GRPCServerAddress, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalln(err)
 	}

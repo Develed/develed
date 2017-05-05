@@ -2,12 +2,10 @@ package main
 
 import (
 	"flag"
-	"fmt"
 	"net"
-	"os"
-	"path"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/develed/develed/config"
 	srv "github.com/develed/develed/services"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -15,22 +13,18 @@ import (
 
 var (
 	debug = flag.Bool("debug", false, "output to screen instead of /dev/dsp")
+	cfg   = flag.String("config", "/etc/develed.toml", "configuration file")
 )
-
-func init() {
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s [opts...] HOST:PORT\n", path.Base(os.Args[0]))
-		flag.PrintDefaults()
-	}
-}
 
 func main() {
 	var sink srv.ImageSinkServer
 	var err error
 
-	if flag.Parse(); flag.NArg() < 1 {
-		flag.Usage()
-		os.Exit(1)
+	flag.Parse()
+
+	conf, err := config.Load(*cfg)
+	if err != nil {
+		log.Fatalln(err)
 	}
 
 	if !*debug {
@@ -45,7 +39,7 @@ func main() {
 		}
 	}
 
-	sock, err := net.Listen("tcp", flag.Arg(0))
+	sock, err := net.Listen("tcp", conf.DSPD.GRPCServerAddress)
 	if err != nil {
 		log.Fatalln(err)
 	}
