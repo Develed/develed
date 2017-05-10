@@ -116,6 +116,9 @@ func (f *FontMgr) Init(fontName string) image.Image {
 		"font6x7": {font6x8, 6, 7},
 	}
 
+	if fontName == "" {
+		fontName = "font6x8"
+	}
 	cFontName = fontName
 
 	reader, err := os.Open("fonts/" + fontName + ".png")
