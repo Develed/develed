@@ -1,0 +1,33 @@
+syntax = "proto3";
+package services;
+
+// === dspd service ===
+
+service ImageSink {
+    rpc Draw (DrawRequest) returns (DrawResponse) {}
+}
+
+message DrawRequest {
+    bytes data = 1;
+}
+
+message DrawResponse {
+    int32 code = 1;
+    string status = 2;
+}
+
+// === textd service ===
+
+service Textd {
+    rpc Write (TextRequest) returns (TextResponse) {}
+}
+
+message TextRequest {
+    string text = 1;
+    string font = 2;
+}
+
+message TextResponse {
+    int32 code = 1;
+    string status = 2;
+}
