@@ -2,39 +2,29 @@ package main
 
 import (
 	"flag"
-	"fmt"
-	"io"
-	"os"
-	"path"
+	"net"
 
 	log "github.com/Sirupsen/logrus"
+	"github.com/develed/develed/config"
+	srv "github.com/develed/develed/services"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/reflection"
 )
 
 var (
 	debug = flag.Bool("debug", false, "output to screen instead of /dev/dsp")
+	cfg   = flag.String("config", "/etc/develed.toml", "configuration file")
 )
 
-func init() {
-	flag.Usage = func() {
-		fmt.Fprintf(os.Stderr, "Usage: %s [opts...] [PIPE]\n", path.Base(os.Args[0]))
-		flag.PrintDefaults()
-	}
-}
-
 func main() {
-	var sink ImageSink
-	var in io.Reader
+	var sink srv.ImageSinkServer
 	var err error
 
-	if flag.Parse(); flag.NArg() > 0 {
-		fifo, err := os.OpenFile(flag.Arg(0), os.O_RDONLY, os.ModeNamedPipe)
-		if err != nil {
-			log.Fatalln(err)
-		}
-		defer fifo.Close()
-		in = fifo
-	} else {
-		in = os.Stdin
+	flag.Parse()
+
+	conf, err := config.Load(*cfg)
+	if err != nil {
+		log.Fatalln(err)
 	}
 
 	if !*debug {
@@ -49,22 +39,16 @@ func main() {
 		}
 	}
 
-	src := NewRawImageSource(in)
+	sock, err := net.Listen("tcp", conf.DSPD.GRPCServerAddress)
+	if err != nil {
+		log.Fatalln(err)
+	}
 
-loop:
-	for {
-		img, err := src.Read()
-		if err != nil {
-			if err == io.EOF {
-				break loop
-			} else {
-				log.Errorln(err)
-				continue
-			}
-		}
+	s := grpc.NewServer()
+	srv.RegisterImageSinkServer(s, sink)
+	reflection.Register(s)
 
-		if err := sink.Write(img); err != nil {
-			log.Errorln(err)
-		}
+	if err := s.Serve(sock); err != nil {
+		log.Fatalln(err)
 	}
 }

@@ -1,0 +1,5 @@
+[dspd]
+grpc_address="localhost:20000"
+
+[textd]
+grpc_address="localhost:20001"
