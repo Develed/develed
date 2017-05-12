@@ -1,0 +1,9 @@
+[Unit]
+Description=Develed Bot
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/bot
+
+[Install]
+WantedBy=multi-user.target

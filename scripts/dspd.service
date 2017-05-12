@@ -1,0 +1,9 @@
+[Unit]
+Description=Develed dspd daemon
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/dspd
+
+[Install]
+WantedBy=multi-user.target
