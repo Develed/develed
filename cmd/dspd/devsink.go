@@ -39,7 +39,7 @@ func NewDeviceSink(devname string) (*DeviceSink, error) {
 	}
 
 	// configure sample format
-	sampleFormatIoctl := 0xc0045005
+	sampleFormatIoctl := uint32(0xc0045005)
 	sampleSize := 0x00002000 /* AFMT_S32_BE */
 	syscall.Syscall(
 		syscall.SYS_IOCTL,
