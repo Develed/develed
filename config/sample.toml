@@ -4,3 +4,6 @@ grpc_address="localhost:20000"
 [textd]
 grpc_address="localhost:20001"
 font_path="/usr/share/develed/fonts"
+
+[bot]
+slack_token=":slack_bot_token:"

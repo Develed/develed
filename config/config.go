@@ -5,6 +5,7 @@ import "github.com/BurntSushi/toml"
 type Global struct {
 	DSPD  Dspd  `toml:"dspd"`
 	Textd Textd `toml:"textd"`
+	Bot   Bot   `toml:"bot"`
 }
 
 type Dspd struct {
@@ -14,6 +15,10 @@ type Dspd struct {
 type Textd struct {
 	GRPCServerAddress string `toml:"grpc_address"`
 	FontPath          string `toml:"font_path"`
+}
+
+type Bot struct {
+	SlackToken string `toml:"slack_token"`
 }
 
 func Load(path string) (*Global, error) {

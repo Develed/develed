@@ -25,7 +25,12 @@ func main() {
 		log.Fatalln(err)
 	}
 
-	bot := slackbot.New(os.Getenv("SLACK_BOT_TOKEN"))
+	token := os.Getenv("SLACK_BOT_TOKEN")
+	if token == "" {
+		token = conf.Bot.SlackToken
+	}
+
+	bot := slackbot.New(token)
 
 	conn, err := grpc.Dial(conf.Textd.GRPCServerAddress, grpc.WithInsecure())
 	if err != nil {
