@@ -3,3 +3,4 @@ grpc_address="localhost:20000"
 
 [textd]
 grpc_address="localhost:20001"
+font_path="cmd/textd/fonts/"

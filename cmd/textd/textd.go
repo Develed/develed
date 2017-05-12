@@ -21,6 +21,8 @@ var (
 	cfg   = flag.String("config", "/etc/develed.toml", "configuration file")
 )
 
+var conf *config.Global
+
 type server struct {
 	sink srv.ImageSinkClient
 }
@@ -28,7 +30,7 @@ type server struct {
 func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResponse, error) {
 	var font FontMgr
 
-	fontImage := font.Init(req.Font)
+	fontImage := font.Init(conf.Textd.FontPath, req.Font)
 
 	// Allocate frame
 	img := image.NewRGBA(image.Rect(0, 0, 39, 9))
@@ -76,7 +78,7 @@ func main() {
 
 	flag.Parse()
 
-	conf, err := config.Load(*cfg)
+	conf, err = config.Load(*cfg)
 	if err != nil {
 		log.Fatalln(err)
 	}

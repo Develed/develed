@@ -32,7 +32,7 @@ type FontInterface interface {
 	Row(char rune) int
 }
 
-func (f *FontMgr) Init(fontName string) image.Image {
+func (f *FontMgr) Init(fontPath string, fontName string) image.Image {
 
 	font6x8 := map[rune]FontMap{
 		' ': {0, 0}, '!': {0, 1}, '"': {0, 2}, '#': {0, 3}, '$': {0, 4}, '%': {0, 5},
@@ -121,7 +121,7 @@ func (f *FontMgr) Init(fontName string) image.Image {
 	}
 	cFontName = fontName
 
-	reader, err := os.Open("fonts/" + fontName + ".png")
+	reader, err := os.Open(fontPath + string(os.PathSeparator) + fontName + ".png")
 	if err != nil {
 		log.Fatal(err)
 	}

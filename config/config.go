@@ -13,6 +13,7 @@ type Dspd struct {
 
 type Textd struct {
 	GRPCServerAddress string `toml:"grpc_address"`
+	FontPath          string `toml:"font_path"`
 }
 
 func Load(path string) (*Global, error) {
