@@ -18,7 +18,7 @@ release: all
 	@mkdir -p $(IPKDIR)/usr/bin $(IPKDIR)/usr/share/develed $(IPKDIR)/etc
 	@cp dspd textd bot $(IPKDIR)/usr/bin/
 	@cp config/sample.toml $(IPKDIR)/etc/develed.toml
-	@cp -R cmd/textd/fonts/ $(IPKDIR)/usr/share/develed/fonts/
+	@cp -R resources/* $(IPKDIR)/usr/share/develed/
 	@cp control $(BUILD)
 	@echo 2.0 > $(BUILD)/debian-binary
 	@tar czf $(BUILD)/control.tar.gz -C $(BUILD) control
