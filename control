@@ -1,0 +1,11 @@
+Package: develed
+Version: 0.1.0
+Description: Develed
+Section: extras
+Priority: optional
+Maintainer: Reparto Embedded
+License: MIT
+Architecture: all
+OE: develed
+Homepage: unknown
+Source:  N/A
