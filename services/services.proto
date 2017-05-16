@@ -31,3 +31,19 @@ message TextResponse {
     int32 code = 1;
     string status = 2;
 }
+
+// === timed service ===
+
+service Timed {
+    rpc Show (TimeFormat) returns (TimeResponse) {}
+}
+
+message TimeFormat {
+    string format = 1;
+    string font = 2;
+}
+
+message TimeResponse {
+    int32 code = 1;
+    string status = 2;
+}
