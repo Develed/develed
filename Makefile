@@ -12,6 +12,8 @@ dspd:
 	@go build ./cmd/dspd
 textd:
 	@go build ./cmd/textd
+fake:
+	@go build ./cmd/fake_req
 
 release: all
 	@rm -rf $(BUILD)

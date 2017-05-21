@@ -3,9 +3,10 @@ package config
 import "github.com/BurntSushi/toml"
 
 type Global struct {
-	DSPD  Dspd  `toml:"dspd"`
-	Textd Textd `toml:"textd"`
-	Bot   Bot   `toml:"bot"`
+	DSPD        Dspd         `toml:"dspd"`
+	Textd       Textd        `toml:"textd"`
+	Bot         Bot          `toml:"bot"`
+	BitmapFonts []BitmapFont `toml:"bitmapfont"`
 }
 
 type Dspd struct {
@@ -15,6 +16,13 @@ type Dspd struct {
 type Textd struct {
 	GRPCServerAddress string `toml:"grpc_address"`
 	FontPath          string `toml:"font_path"`
+}
+
+type BitmapFont struct {
+	Name     string `toml:"name"`
+	FileName string `toml:"filename"`
+	High     int    `toml:"high"`
+	Width    int    `toml:"width"`
 }
 
 type Bot struct {

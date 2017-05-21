@@ -25,6 +25,8 @@ service Textd {
 message TextRequest {
     string text = 1;
     string font = 2;
+    int64 font_color = 3;
+    int64 font_bg = 4;
 }
 
 message TextResponse {

@@ -5,8 +5,12 @@ import (
 	"flag"
 	"image"
 	"image/color"
+	"image/draw"
 	"image/png"
 	"net"
+	"time"
+
+	bitmapfont "github.com/develed/develed/bitmapfont"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/develed/develed/config"
@@ -28,43 +32,45 @@ type server struct {
 }
 
 func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResponse, error) {
-	var font FontMgr
 
-	fontImage := font.Init(conf.Textd.FontPath, req.Font)
-
-	// Allocate frame
-	img := image.NewRGBA(image.Rect(0, 0, 39, 9))
-	col := color.RGBA{0, 0, 0, 255}
-	nm := img.Bounds()
-	for y := 0; y < nm.Dy(); y++ {
-		for x := 0; x < nm.Dx(); x++ {
-			img.Set(x, y, col)
-		}
+	log.Debug(req.Font)
+	err3 := bitmapfont.Init(conf.Textd.FontPath, req.Font, conf.BitmapFonts)
+	if err3 != nil {
+		log.Error(err3)
+		return nil, err3
 	}
 
-	// Fill frame
-	for n, key := range req.Text {
-		outx := n * font.Width()
-		wf := font.Width()
-		hf := font.High()
-		col := font.Col(key)
-		row := font.Row(key)
+	log.Debugf("Color: %v Bg: %v\n", req.FontColor, req.FontBg)
 
-		for y := 0; y < hf; y++ {
-			for x := 0; x < wf; x++ {
-				img.Set(x+outx, y, fontImage.At(x+wf*col, y+hf*row))
-			}
-		}
+	txt_color := color.RGBA{255, 0, 0, 255}
+	txt_bg := color.RGBA{0, 0, 0, 255}
+
+	img, err2 := bitmapfont.Render(req.Text, txt_color, txt_bg, 1, 0)
+	if err2 != nil {
+		log.Error(err2)
+		return nil, err2
 	}
 
-	buf := &bytes.Buffer{}
-	png.Encode(buf, img)
+	var resp *srv.DrawResponse
+	var err error
+	for i := 0; ; i++ {
 
-	resp, err := s.sink.Draw(context.Background(), &srv.DrawRequest{
-		Data: buf.Bytes(),
-	})
-	if err != nil {
-		return nil, err
+		if i*39 > (img.Bounds().Dx() + 39) {
+			break
+		}
+		r := image.Pt(39*i, 0)
+		m := image.NewRGBA(image.Rect(0, 0, 39, 9))
+		draw.Draw(m, m.Bounds(), img, r, draw.Src)
+		buf := &bytes.Buffer{}
+		png.Encode(buf, m)
+
+		resp, err = s.sink.Draw(context.Background(), &srv.DrawRequest{
+			Data: buf.Bytes(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		time.Sleep(1 * time.Second)
 	}
 
 	return &srv.TextResponse{
