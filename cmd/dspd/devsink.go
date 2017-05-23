@@ -6,6 +6,7 @@ import (
 	_ "image/jpeg"
 	_ "image/png"
 	"io"
+	"io/ioutil"
 	"os"
 	"syscall"
 	"unsafe"
@@ -16,6 +17,7 @@ import (
 )
 
 const (
+	cPWMEnablePath = "/sys/devices/pwm-ssc/enable"
 	cResetDuration = 60 // [us]
 	cBytePerUSec   = 5
 )
@@ -46,6 +48,10 @@ func NewDeviceSink(devname string) (*DeviceSink, error) {
 		out.Fd(),
 		uintptr(sampleFormatIoctl),
 		uintptr(unsafe.Pointer(&sampleSize)))
+
+	if err := ioutil.WriteFile(cPWMEnablePath, []byte("1\n"), 0644); err != nil {
+		return nil, err
+	}
 
 	return &DeviceSink{
 		dev: out,
