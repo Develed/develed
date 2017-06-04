@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"flag"
-	"os"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/develed/develed/config"
@@ -24,8 +23,8 @@ func main() {
 	}
 
 	text := "ciao"
-	if len(os.Args) > 1 {
-		text = os.Args[1]
+	if flag.NArg() >= 1 {
+		text = flag.Arg(0)
 	}
 
 	conn, err := grpc.Dial(conf.Textd.GRPCServerAddress, grpc.WithInsecure())
