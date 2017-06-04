@@ -12,6 +12,8 @@ import (
 
 	bitmapfont "github.com/develed/develed/bitmapfont"
 
+	bitmapfont "github.com/develed/develed/bitmapfont"
+
 	log "github.com/Sirupsen/logrus"
 	"github.com/develed/develed/config"
 	srv "github.com/develed/develed/services"
@@ -42,7 +44,6 @@ var cFrameWidth int = 39
 var cFrameHigh int = 9
 
 func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResponse, error) {
-
 	var err error
 	err = bitmapfont.Init(conf.Textd.FontPath, req.Font, conf.BitmapFonts)
 	if err != nil {
