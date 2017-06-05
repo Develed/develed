@@ -4,6 +4,7 @@ import (
 	"errors"
 	"image"
 	"image/color"
+	"image/draw"
 	"os"
 
 	log "github.com/Sirupsen/logrus"
@@ -23,13 +24,9 @@ func Render(text string, char_space int, top_off int) (image.Image, error) {
 
 	// Allocate frame
 	img := image.NewRGBA(image.Rect(0, 0, frame_width, 9))
-	col := color.RGBA{0, 0, 0, 255}
-	nm := img.Bounds()
-	for y := 0; y < nm.Dy(); y++ {
-		for x := 0; x < nm.Dx(); x++ {
-			img.Set(x, y, col)
-		}
-	}
+	blue := color.RGBA{0, 0, 0, 255}
+	draw.Draw(img, img.Bounds(), &image.Uniform{blue}, image.ZP, draw.Src)
+
 	log.Debug(text)
 
 	// Fill frame
@@ -37,9 +34,7 @@ func Render(text string, char_space int, top_off int) (image.Image, error) {
 		col := int(key-' ') % fontcolums
 		row := int(key-' ') / fontcolums
 
-		log.Debug("offset ", int(key-' '))
-		log.Debug("Col ", col)
-		log.Debug("Row ", row)
+		log.Debug("offset ", int(key-' '), " Col ", col, " Row ", row)
 
 		for y := 0; y < Config.High+top_off; y++ {
 			for x := 0; x < Config.Width+char_space; x++ {
