@@ -12,8 +12,6 @@ import (
 
 	bitmapfont "github.com/develed/develed/bitmapfont"
 
-	bitmapfont "github.com/develed/develed/bitmapfont"
-
 	log "github.com/Sirupsen/logrus"
 	"github.com/develed/develed/config"
 	srv "github.com/develed/develed/services"

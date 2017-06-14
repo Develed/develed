@@ -14,40 +14,28 @@ import (
 var fontImageTable image.Image
 var Config conf.BitmapFont
 
-func Render(text string, char_space int, top_off int) (image.Image, error) {
+func Render(text string, text_color color.RGBA, text_bg color.RGBA, char_space int, top_off int) (image.Image, error) {
 
-	img_rect := fontImageTable.Bounds()
-	fontcolums := img_rect.Dx() / Config.Width
-
+	fontcolums := fontImageTable.Bounds().Dx() / Config.Width
 	frame_width := len(text)*Config.Width + (len(text)-1)*(char_space)
-	log.Debug("len ", frame_width)
+	log.Debug("Frame len in px:", frame_width)
 
-	// Allocate frame
-	img := image.NewRGBA(image.Rect(0, 0, frame_width, 9))
-	blue := color.RGBA{0, 0, 0, 255}
-	draw.Draw(img, img.Bounds(), &image.Uniform{blue}, image.ZP, draw.Src)
+	m := image.NewRGBA(image.Rect(0, 0, frame_width, 9))
+	draw.Draw(m, m.Bounds(), &image.Uniform{text_bg}, image.ZP, draw.Src)
 
-	log.Debug(text)
+	src := &image.Uniform{text_color}
 
-	// Fill frame
 	for n, key := range text {
 		col := int(key-' ') % fontcolums
 		row := int(key-' ') / fontcolums
 
-		log.Debug("offset ", int(key-' '), " Col ", col, " Row ", row)
+		draw.DrawMask(m, image.Rect(n*(Config.Width+char_space), 0,
+			Config.Width+n*(Config.Width+char_space), Config.High),
+			src, image.ZP, fontImageTable, image.Pt(col*Config.Width, row*Config.High), draw.Over)
 
-		for y := 0; y < Config.High+top_off; y++ {
-			for x := 0; x < Config.Width+char_space; x++ {
-				if x >= Config.Width {
-					img.Set(x+n*(Config.Width+char_space), y+top_off, color.RGBA{0, 0, 0, 255})
-				} else {
-					img.Set(x+n*(Config.Width+char_space), y+top_off, fontImageTable.At(x+Config.Width*col, y+Config.High*row))
-				}
-			}
-		}
+		log.Debugf("key: %c off: %v c: %v r: %v", key, int(key-' '), col, row)
 	}
-
-	return img, nil
+	return m, nil
 }
 
 func Init(path string, name string, cfg []conf.BitmapFont) error {
