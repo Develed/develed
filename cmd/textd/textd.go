@@ -51,6 +51,8 @@ func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResp
 		}, nil
 	}
 
+	log.Debugf("Color: %v Bg: %v\n", req.FontColor, req.FontBg)
+
 	txt_color := color.RGBA{255, 0, 0, 255}
 	txt_bg := color.RGBA{0, 0, 0, 255}
 	text_img, charWidth, err := bitmapfont.Render(req.Text, txt_color, txt_bg, 1, 0)

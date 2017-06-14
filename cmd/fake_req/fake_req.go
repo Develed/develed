@@ -35,7 +35,9 @@ func main() {
 
 	textd := srv.NewTextdClient(conn)
 	_, err = textd.Write(context.Background(), &srv.TextRequest{
-		Text: text,
+		Text:      text,
+		FontColor: 0xFFAABBCC,
+		FontBg:    0x00112233,
 	})
 	if err != nil {
 		log.Errorln(err)
