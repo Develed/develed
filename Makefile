@@ -24,7 +24,7 @@ proto:
 release: all
 	@rm -rf $(BUILD)
 	@mkdir -p $(IPKDIR)/usr/bin $(IPKDIR)/usr/share/develed $(IPKDIR)/etc/systemd/system
-	@cp dspd textd bot $(IPKDIR)/usr/bin/
+	@cp $(TARGETS) $(IPKDIR)/usr/bin/
 	@cp config/sample.toml $(IPKDIR)/etc/develed.toml
 	@cp -R resources/* $(IPKDIR)/usr/share/develed/
 	@cp scripts/*.service $(IPKDIR)/etc/systemd/system/

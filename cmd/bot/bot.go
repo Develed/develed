@@ -69,7 +69,7 @@ func main() {
 		bot.Message(msg.Channel, "Non ho capito")
 	})
 
-	bot.RespondTo("scrivi (.*)", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
+	bot.RespondTo("^scrivi (.*)$", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
 		text := args[1]
 
 		_, err := textd.Write(context.Background(), &srv.TextRequest{
@@ -82,7 +82,7 @@ func main() {
 		}
 	})
 
-	bot.RespondTo("mostra (https?://.*)", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
+	bot.RespondTo("^mostra <?(https?://.*?)>?$", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
 		url := args[1]
 
 		_, err := imaged.Show(context.Background(), &srv.ImageRequest{
