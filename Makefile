@@ -1,10 +1,12 @@
 VERTAG = $(shell grep "Version:" scripts/control | cut -c 10-)
 BUILD = build/
 IPKDIR = build/ipk/
+DAEMONS = textd imaged dspd
+TARGETS = proto bot $(DAEMONS)
 
-.PHONY: bot textd dspd release
+.PHONY: $(TARGETS) release
 
-all: proto bot textd dspd
+all: $(TARGETS)
 
 bot:
 	@go build ./cmd/bot
@@ -12,6 +14,8 @@ dspd:
 	@go build ./cmd/dspd
 textd:
 	@go build ./cmd/textd
+imaged:
+	@go build ./cmd/imaged
 fake:
 	@go build ./cmd/fake_req
 proto:
@@ -31,5 +35,14 @@ release: all
 	@tar czf $(BUILD)/data.tar.gz -C $(IPKDIR) .
 	@ar r $(BUILD)/develed_$(VERTAG).ipk $(BUILD)/control.tar.gz $(BUILD)/data.tar.gz $(BUILD)/debian-binary
 
+test: all
+	@killall $(TARGETS) >/dev/null 2>&1 || true
+	@./dspd -config config/sample.toml -debug &
+	@./imaged -config config/sample.toml &
+	@./textd -config config/sample.toml &
+	@sleep 0.5
+	@./bot -config config/sample.toml -debug
+	@killall $(DAEMONS) >/dev/null 2>&1
+
 clean:
-	rm -rf $(BUILD) dspd textd dspd
+	rm -rf $(BUILD) $(TARGETS)

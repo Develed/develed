@@ -2,7 +2,9 @@ package main
 
 import (
 	"flag"
+	"fmt"
 	"os"
+	"os/signal"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/develed/develed/config"
@@ -30,6 +32,15 @@ func main() {
 	if token == "" {
 		token = conf.Bot.SlackToken
 	}
+
+	sigch := make(chan os.Signal, 1)
+	signal.Notify(sigch, os.Interrupt)
+
+	go func() {
+		<-sigch
+		fmt.Println("Interrupt received, extiting.")
+		os.Exit(0)
+	}()
 
 	var opts slackbot.Config
 

@@ -3,6 +3,7 @@ package slackbot
 import (
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"regexp"
 	"strings"
@@ -83,6 +84,9 @@ func (bot *Bot) startLocal() error {
 
 		cmd, err := br.ReadString('\n')
 		if err != nil {
+			if err == io.EOF {
+				break
+			}
 			return err
 		}
 
@@ -90,6 +94,8 @@ func (bot *Bot) startLocal() error {
 			Text: cmd,
 		})
 	}
+
+	return nil
 }
 
 func (bot *Bot) startRTM() error {
