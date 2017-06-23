@@ -72,7 +72,7 @@ func (s *server) Show(ctx context.Context, req *srv.ImageRequest) (*srv.ImageRes
 	}
 
 	var out bytes.Buffer
-	png.Encode(&out, resize.Resize(33, 9, img, resize.Lanczos3))
+	png.Encode(&out, resize.Resize(39, 9, img, resize.Lanczos3))
 
 	resp, err := s.sink.Draw(context.Background(), &srv.DrawRequest{
 		Data: out.Bytes(),
