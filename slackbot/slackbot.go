@@ -1,8 +1,13 @@
 package slackbot
 
 import (
+	"errors"
+	"fmt"
+	"os"
 	"regexp"
 	"strings"
+
+	"bufio"
 
 	"github.com/Sirupsen/logrus"
 	"github.com/nlopes/slack"
@@ -15,6 +20,7 @@ type Bot struct {
 	Name   string
 	UserID string
 
+	config Config
 	client *slack.Client
 	rtm    *slack.RTM
 	logger *logrus.Logger
@@ -23,11 +29,16 @@ type Bot struct {
 	defact  SimpleAction
 }
 
-func New(token string) *Bot {
+type Config struct {
+	Offline bool
+}
+
+func New(token string, conf Config) *Bot {
 	client := slack.New(token)
 	logger := logrus.New()
 
 	bot := &Bot{
+		config:  conf,
 		client:  client,
 		rtm:     client.NewRTM(),
 		logger:  logger,
@@ -37,8 +48,12 @@ func New(token string) *Bot {
 	return bot
 }
 
-func (bot *Bot) Start() {
-	bot.handleRTM()
+func (bot *Bot) Start() error {
+	if bot.config.Offline {
+		return bot.startLocal()
+	}
+
+	return bot.startRTM()
 }
 
 func (bot *Bot) RespondTo(match string, action Action) {
@@ -50,10 +65,34 @@ func (bot *Bot) DefaultResponse(action SimpleAction) {
 }
 
 func (bot *Bot) Message(channel string, msg string) {
-	bot.client.PostMessage(channel, msg, slack.NewPostMessageParameters())
+	if bot.config.Offline {
+		fmt.Printf("< %s\n", msg)
+	} else {
+		bot.client.PostMessage(channel, msg, slack.NewPostMessageParameters())
+	}
 }
 
-func (bot *Bot) handleRTM() {
+func (bot *Bot) startLocal() error {
+	log := bot.logger
+	br := bufio.NewReader(os.Stdin)
+
+	log.Infoln("Running in local mode")
+
+	for {
+		fmt.Print("> ")
+
+		cmd, err := br.ReadString('\n')
+		if err != nil {
+			return err
+		}
+
+		bot.handleMsg(&slack.Msg{
+			Text: cmd,
+		})
+	}
+}
+
+func (bot *Bot) startRTM() error {
 	var filter filterer
 
 	rtm := bot.rtm
@@ -83,14 +122,15 @@ func (bot *Bot) handleRTM() {
 			log.Errorf("Error: %s\n", ev.Error())
 
 		case *slack.InvalidAuthEvent:
-			log.Fatalln("Invalid credentials")
-			return
+			return errors.New("Invalid credentials")
 
 		default:
 			// Can be used to handle custom events.
 			// See: https://github.com/danackerson/bender-slackbot
 		}
 	}
+
+	return nil
 }
 
 func (bot *Bot) handleMsg(msg *slack.Msg) {

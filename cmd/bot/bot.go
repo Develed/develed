@@ -14,7 +14,8 @@ import (
 )
 
 var (
-	cfg = flag.String("config", "/etc/develed.toml", "configuration file")
+	debug = flag.Bool("debug", false, "enter debug mode")
+	cfg   = flag.String("config", "/etc/develed.toml", "configuration file")
 )
 
 func main() {
@@ -30,7 +31,13 @@ func main() {
 		token = conf.Bot.SlackToken
 	}
 
-	bot := slackbot.New(token)
+	var opts slackbot.Config
+
+	if *debug {
+		opts.Offline = true
+	}
+
+	bot := slackbot.New(token, opts)
 
 	textdConn, err := grpc.Dial(conf.Textd.GRPCServerAddress, grpc.WithInsecure())
 	if err != nil {
@@ -64,7 +71,7 @@ func main() {
 		}
 	})
 
-	bot.RespondTo("mostra (http{s?}://.*)", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
+	bot.RespondTo("mostra (https?://.*)", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
 		url := args[1]
 
 		_, err := imaged.Show(context.Background(), &srv.ImageRequest{
@@ -77,5 +84,7 @@ func main() {
 		}
 	})
 
-	bot.Start()
+	if err := bot.Start(); err != nil {
+		log.Fatalln(err)
+	}
 }
