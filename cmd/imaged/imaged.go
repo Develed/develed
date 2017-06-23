@@ -1,20 +1,21 @@
 package main
 
 import (
-	"flag"
-	"net"
-
+	"bytes"
 	"errors"
-
-	"net/http"
-
-	"io/ioutil"
-
+	"flag"
 	"fmt"
+	"image"
+	_ "image/jpeg"
+	"image/png"
+	"io/ioutil"
+	"net"
+	"net/http"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/develed/develed/config"
 	srv "github.com/develed/develed/services"
+	"github.com/nfnt/resize"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -65,8 +66,16 @@ func (s *server) Show(ctx context.Context, req *srv.ImageRequest) (*srv.ImageRes
 		return nil, errors.New("Invalid type in request")
 	}
 
+	img, _, err := image.Decode(bytes.NewReader(buf))
+	if err != nil {
+		return nil, err
+	}
+
+	var out bytes.Buffer
+	png.Encode(&out, resize.Resize(33, 9, img, resize.Lanczos3))
+
 	resp, err := s.sink.Draw(context.Background(), &srv.DrawRequest{
-		Data: buf,
+		Data: out.Bytes(),
 	})
 	if err != nil {
 		return nil, err
