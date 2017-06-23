@@ -32,13 +32,20 @@ func main() {
 
 	bot := slackbot.New(token)
 
-	conn, err := grpc.Dial(conf.Textd.GRPCServerAddress, grpc.WithInsecure())
+	textdConn, err := grpc.Dial(conf.Textd.GRPCServerAddress, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalln(err)
 	}
-	defer conn.Close()
+	defer textdConn.Close()
 
-	textd := srv.NewTextdClient(conn)
+	imagedConn, err := grpc.Dial(conf.Imaged.GRPCServerAddress, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer imagedConn.Close()
+
+	textd := srv.NewTextdClient(textdConn)
+	imaged := srv.NewImagedClient(imagedConn)
 
 	bot.DefaultResponse(func(b *slackbot.Bot, msg *slack.Msg) {
 		bot.Message(msg.Channel, "Non ho capito")
@@ -54,6 +61,19 @@ func main() {
 			log.Errorln(err)
 		} else {
 			bot.Message(msg.Channel, "Hai scritto: "+text)
+		}
+	})
+
+	bot.RespondTo("mostra (http{s?}://.*)", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
+		url := args[1]
+
+		_, err := imaged.Show(context.Background(), &srv.ImageRequest{
+			Source: &srv.ImageRequest_Url{Url: url},
+		})
+		if err != nil {
+			log.Errorln(err)
+		} else {
+			bot.Message(msg.Channel, ":thumbsup:")
 		}
 	})
 

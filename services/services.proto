@@ -33,3 +33,21 @@ message TextResponse {
     int32 code = 1;
     string status = 2;
 }
+
+// === imaged service ===
+
+service Imaged {
+    rpc Show (ImageRequest) returns (ImageResponse) {}
+}
+
+message ImageRequest {
+    oneof source {
+        string url = 1;
+        bytes data = 2;
+    }
+}
+
+message ImageResponse {
+    int32 code = 1;
+    string status = 2;
+}

@@ -6,6 +6,7 @@ type Global struct {
 	DSPD        Dspd         `toml:"dspd"`
 	Textd       Textd        `toml:"textd"`
 	Bot         Bot          `toml:"bot"`
+	Imaged      Imaged       `toml:"imaged"`
 	BitmapFonts []BitmapFont `toml:"bitmapfont"`
 }
 
@@ -23,6 +24,10 @@ type BitmapFont struct {
 	FileName string `toml:"filename"`
 	High     int    `toml:"high"`
 	Width    int    `toml:"width"`
+}
+
+type Imaged struct {
+	GRPCServerAddress string `toml:"grpc_address"`
 }
 
 type Bot struct {

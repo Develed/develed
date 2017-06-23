@@ -4,7 +4,7 @@ IPKDIR = build/ipk/
 
 .PHONY: bot textd dspd release
 
-all: bot textd dspd
+all: proto bot textd dspd
 
 bot:
 	@go build ./cmd/bot
@@ -14,6 +14,8 @@ textd:
 	@go build ./cmd/textd
 fake:
 	@go build ./cmd/fake_req
+proto:
+	@protoc -I services/ services/services.proto --go_out=plugins=grpc:services
 
 release: all
 	@rm -rf $(BUILD)

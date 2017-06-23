@@ -17,6 +17,9 @@ filename="font6x8.png"
 high=6
 width=8
 
+[imaged]
+grpc_address="localhost:20002"
+
 [bot]
 slack_token=":slack_bot_token:"
 
