@@ -31,52 +31,99 @@ type server struct {
 	sink srv.ImageSinkClient
 }
 
+type RenderCtx struct {
+	img        image.Image
+	charWidth  int
+	scrollTime time.Duration
+}
+
+var cRenderChannel = make(chan RenderCtx, 1)
+var cFrameWidth int = 39
+var cFrameHigh int = 9
+
 func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResponse, error) {
 
-	log.Debug(req.Font)
-	err3 := bitmapfont.Init(conf.Textd.FontPath, req.Font, conf.BitmapFonts)
-	if err3 != nil {
-		log.Error(err3)
-		return nil, err3
+	var err error
+	err = bitmapfont.Init(conf.Textd.FontPath, req.Font, conf.BitmapFonts)
+	if err != nil {
+		return &srv.TextResponse{
+			Code:   -1,
+			Status: err.Error(),
+		}, nil
 	}
-
-	log.Debugf("Color: %v Bg: %v\n", req.FontColor, req.FontBg)
 
 	txt_color := color.RGBA{255, 0, 0, 255}
 	txt_bg := color.RGBA{0, 0, 0, 255}
-
-	img, err2 := bitmapfont.Render(req.Text, txt_color, txt_bg, 1, 0)
-	if err2 != nil {
-		log.Error(err2)
-		return nil, err2
+	text_img, charWidth, err := bitmapfont.Render(req.Text, txt_color, txt_bg, 1, 0)
+	if err != nil {
+		return &srv.TextResponse{
+			Code:   -1,
+			Status: err.Error(),
+		}, nil
 	}
 
-	var resp *srv.DrawResponse
-	var err error
-	for i := 0; ; i++ {
-
-		if i*39 > (img.Bounds().Dx() + 39) {
-			break
-		}
-		r := image.Pt(39*i, 0)
-		m := image.NewRGBA(image.Rect(0, 0, 39, 9))
-		draw.Draw(m, m.Bounds(), img, r, draw.Src)
-		buf := &bytes.Buffer{}
-		png.Encode(buf, m)
-
-		resp, err = s.sink.Draw(context.Background(), &srv.DrawRequest{
-			Data: buf.Bytes(),
-		})
-		if err != nil {
-			return nil, err
-		}
-		time.Sleep(1 * time.Second)
-	}
+	cRenderChannel <- RenderCtx{text_img, charWidth, 300 * time.Millisecond}
+	log.Debugf("Color: %v Bg: %v\n", req.FontColor, req.FontBg)
 
 	return &srv.TextResponse{
-		Code:   resp.Code,
-		Status: resp.Status,
+		Code:   0,
+		Status: "Ok",
 	}, nil
+}
+
+func renderLoop(dr_srv *server) {
+	var err error
+	frameCtx := RenderCtx{
+		nil,
+		cFrameWidth,
+		500 * time.Millisecond,
+	}
+
+	text_img := image.NewRGBA(image.Rect(0, 0, cFrameWidth, cFrameHigh))
+	//draw.Draw(text_img, text_img.Bounds(), &image.Uniform{color.RGBA{0, 255, 0, 255}}, image.ZP, draw.Src)
+
+	for {
+		select {
+		case ctx := <-cRenderChannel:
+			log.Debug("Render channel")
+			frameCtx.charWidth = ctx.charWidth
+			frameCtx.scrollTime = ctx.scrollTime
+
+			text_img = image.NewRGBA(ctx.img.Bounds())
+			draw.Draw(text_img, ctx.img.Bounds(), ctx.img, image.ZP, draw.Src)
+		default:
+			for frame_idx := 0; ; frame_idx++ {
+				time.Sleep(frameCtx.scrollTime)
+				if text_img == nil {
+					log.Debug("..")
+					break
+				}
+
+				frame := image.NewRGBA(image.Rect(0, 0, cFrameWidth, cFrameHigh))
+
+				// Fill frame only with max char lenght
+				maxCharNum := (cFrameWidth / frameCtx.charWidth)
+				xStart := (maxCharNum - frame_idx) * frameCtx.charWidth
+				xStop := maxCharNum * frameCtx.charWidth
+
+				draw.Draw(frame, image.Rect(xStart, 0, xStop, cFrameHigh), text_img, image.ZP, draw.Src)
+				buf := &bytes.Buffer{}
+				png.Encode(buf, frame)
+
+				_, err = dr_srv.sink.Draw(context.Background(), &srv.DrawRequest{
+					Data: buf.Bytes(),
+				})
+
+				if (frame_idx+1)*frameCtx.charWidth >= (text_img.Bounds().Dx() + cFrameWidth) {
+					break
+				}
+
+				if err != nil {
+					break
+				}
+			}
+		}
+	}
 }
 
 func main() {
@@ -105,10 +152,11 @@ func main() {
 	defer conn.Close()
 
 	s := grpc.NewServer()
-	srv.RegisterTextdServer(s, &server{
-		sink: srv.NewImageSinkClient(conn),
-	})
+	drawing_srv := &server{sink: srv.NewImageSinkClient(conn)}
+	srv.RegisterTextdServer(s, drawing_srv)
 	reflection.Register(s)
+
+	go renderLoop(drawing_srv)
 
 	if err := s.Serve(sock); err != nil {
 		log.Fatalln(err)
