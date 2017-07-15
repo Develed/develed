@@ -14,7 +14,7 @@ import (
 var fontImageTable image.Image
 var Config conf.BitmapFont
 
-func Render(text string, text_color color.RGBA, text_bg color.RGBA, char_space int, top_off int) (image.Image, error) {
+func Render(text string, text_color color.RGBA, text_bg color.RGBA, char_space int, top_off int) (image.Image, int, error) {
 
 	fontcolums := fontImageTable.Bounds().Dx() / Config.Width
 	frame_width := len(text)*Config.Width + (len(text)-1)*(char_space)
@@ -33,9 +33,9 @@ func Render(text string, text_color color.RGBA, text_bg color.RGBA, char_space i
 			Config.Width+n*(Config.Width+char_space), Config.High),
 			src, image.ZP, fontImageTable, image.Pt(col*Config.Width, row*Config.High), draw.Over)
 
-		log.Debugf("key: %c off: %v c: %v r: %v", key, int(key-' '), col, row)
+		//log.Debugf("key: %c off: %v c: %v r: %v", key, int(key-' '), col, row)
 	}
-	return m, nil
+	return m, (Config.Width + char_space), nil
 }
 
 func Init(path string, name string, cfg []conf.BitmapFont) error {
