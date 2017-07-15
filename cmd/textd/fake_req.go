@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"flag"
+	"os"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/develed/develed/config"
@@ -23,8 +24,8 @@ func main() {
 	}
 
 	text := "ciao"
-	if flag.NArg() >= 1 {
-		text = flag.Arg(0)
+	if len(os.Args) > 1 {
+		text = os.Args[1]
 	}
 
 	conn, err := grpc.Dial(conf.Textd.GRPCServerAddress, grpc.WithInsecure())
@@ -34,13 +35,10 @@ func main() {
 	defer conn.Close()
 
 	textd := srv.NewTextdClient(conn)
-	resp, err := textd.Write(context.Background(), &srv.TextRequest{
-		Text:      text,
-		FontColor: 0xFFAABBCC,
-		FontBg:    0x00112233,
+	_, err = textd.Write(context.Background(), &srv.TextRequest{
+		Text: text,
 	})
 	if err != nil {
 		log.Errorln(err)
 	}
-	log.Info(resp.Status, " ", resp.Code)
 }
