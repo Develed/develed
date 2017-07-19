@@ -2,11 +2,11 @@ VERTAG = $(shell grep "Version:" scripts/control | cut -c 10-)
 BUILD = build/
 IPKDIR = build/ipk/
 DAEMONS = textd imaged dspd
-TARGETS = proto bot $(DAEMONS)
+TARGETS = bot $(DAEMONS)
 
-.PHONY: $(TARGETS) release
+.PHONY: $(TARGETS) proto release
 
-all: $(TARGETS)
+all: proto $(TARGETS)
 
 bot:
 	@go build ./cmd/bot
