@@ -4,45 +4,52 @@ IPKDIR = build/ipk/
 DAEMONS = textd imaged dspd
 TARGETS = bot $(DAEMONS)
 
+# Verbose build?
+ifeq ($(V),1)
+Q :=
+else
+Q := @
+endif
+
 .PHONY: $(TARGETS) proto release
 
 all: proto $(TARGETS)
 
 bot:
-	@go build ./cmd/bot
+	$Q go build ./cmd/bot
 dspd:
-	@go build ./cmd/dspd
+	$Q go build ./cmd/dspd
 textd:
-	@go build ./cmd/textd
+	$Q go build ./cmd/textd
 imaged:
-	@go build ./cmd/imaged
+	$Q go build ./cmd/imaged
 fake:
-	@go build ./cmd/fake_req
+	$Q go build ./cmd/fake_req
 proto:
-	@protoc -I services/ services/services.proto --go_out=plugins=grpc:services
+	$Q protoc -I services/ services/services.proto --go_out=plugins=grpc:services
 
 release: all
-	@rm -rf $(BUILD)
-	@mkdir -p $(IPKDIR)/usr/bin $(IPKDIR)/usr/share/develed $(IPKDIR)/etc/systemd/system
-	@cp $(TARGETS) $(IPKDIR)/usr/bin/
-	@cp config/sample.toml $(IPKDIR)/etc/develed.toml
-	@cp -R resources/* $(IPKDIR)/usr/share/develed/
-	@cp scripts/*.service $(IPKDIR)/etc/systemd/system/
-	@cp scripts/control scripts/postinst scripts/preinst $(BUILD)
-	@echo 2.0 > $(BUILD)/debian-binary
-	@sed -i "s/:slack_bot_token:/$(SLACK_BOT_TOKEN)/g" $(IPKDIR)/etc/develed.toml
-	@tar czf $(BUILD)/control.tar.gz -C $(BUILD) control postinst preinst
-	@tar czf $(BUILD)/data.tar.gz -C $(IPKDIR) .
-	@ar r $(BUILD)/develed_$(VERTAG).ipk $(BUILD)/control.tar.gz $(BUILD)/data.tar.gz $(BUILD)/debian-binary
+	$Q rm -rf $(BUILD)
+	$Q mkdir -p $(IPKDIR)/usr/bin $(IPKDIR)/usr/share/develed $(IPKDIR)/etc/systemd/system
+	$Q cp $(TARGETS) $(IPKDIR)/usr/bin/
+	$Q cp config/sample.toml $(IPKDIR)/etc/develed.toml
+	$Q cp -R resources/* $(IPKDIR)/usr/share/develed/
+	$Q cp scripts/*.service $(IPKDIR)/etc/systemd/system/
+	$Q cp scripts/control scripts/postinst scripts/preinst $(BUILD)
+	$Q echo 2.0 > $(BUILD)/debian-binary
+	$Q sed -i "s/:slack_bot_token:/$(SLACK_BOT_TOKEN)/g" $(IPKDIR)/etc/develed.toml
+	$Q tar czf $(BUILD)/control.tar.gz -C $(BUILD) control postinst preinst
+	$Q tar czf $(BUILD)/data.tar.gz -C $(IPKDIR) .
+	$Q ar r $(BUILD)/develed_$(VERTAG).ipk $(BUILD)/control.tar.gz $(BUILD)/data.tar.gz $(BUILD)/debian-binary
 
 test: all
-	@killall $(TARGETS) >/dev/null 2>&1 || true
-	@./dspd -config config/sample.toml -debug &
-	@./imaged -config config/sample.toml &
-	@./textd -config config/sample.toml &
-	@sleep 0.5
-	@./bot -config config/sample.toml -debug
-	@killall $(DAEMONS) >/dev/null 2>&1
+	$Q killall $(TARGETS) >/dev/null 2>&1 || true
+	$Q ./dspd -config config/sample.toml -debug &
+	$Q ./imaged -config config/sample.toml &
+	$Q ./textd -config config/sample.toml &
+	$Q sleep 0.5
+	$Q ./bot -config config/sample.toml -debug
+	$Q killall $(DAEMONS) >/dev/null 2>&1
 
 clean:
 	rm -rf $(BUILD) $(TARGETS)
