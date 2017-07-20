@@ -63,7 +63,7 @@ func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResp
 		}, nil
 	}
 
-	cRenderTextChannel <- RenderCtx{text_img, charWidth, 300 * time.Millisecond}
+	cRenderTextChannel <- RenderCtx{text_img, charWidth, 200 * time.Millisecond}
 
 	return &srv.TextResponse{
 		Code:   0,
@@ -73,7 +73,7 @@ func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResp
 
 func renderLoop(dr_srv *server) {
 	var err error
-	ctx := RenderCtx{nil, cFrameWidth, 500 * time.Millisecond}
+	ctx := RenderCtx{nil, cFrameWidth, 100 * time.Millisecond}
 	text_img := image.NewRGBA(image.Rect(0, 0, cFrameWidth, cFrameHigh))
 	//draw.Draw(text_img, text_img.Bounds(), &image.Uniform{color.RGBA{0, 255, 0, 255}}, image.ZP, draw.Src)
 
@@ -97,15 +97,8 @@ func renderLoop(dr_srv *server) {
 				time.Sleep(ctx.scrollTime)
 
 				// Fill frame only with max char lenght
-				maxCharNum := cFrameWidth
-				if ctx.charWidth != 0 {
-					maxCharNum = (cFrameWidth / ctx.charWidth)
-				}
-				xStart := (maxCharNum - frame_idx) * ctx.charWidth
-				xStop := maxCharNum * ctx.charWidth
-
 				frame := image.NewRGBA(image.Rect(0, 0, cFrameWidth, cFrameHigh))
-				draw.Draw(frame, image.Rect(xStart, 0, xStop, cFrameHigh), text_img, image.ZP, draw.Src)
+				draw.Draw(frame, image.Rect(cFrameWidth-frame_idx, 0, cFrameWidth, cFrameHigh), text_img, image.ZP, draw.Src)
 				buf := &bytes.Buffer{}
 				png.Encode(buf, frame)
 
@@ -117,7 +110,7 @@ func renderLoop(dr_srv *server) {
 					break
 				}
 
-				if (frame_idx+1)*ctx.charWidth >= (text_img.Bounds().Dx() + cFrameWidth) {
+				if frame_idx >= (text_img.Bounds().Dx() + cFrameWidth) {
 					log.Debug("End frame wrap..")
 					break
 				}
@@ -144,7 +137,7 @@ func clockLoop() {
 			if err != nil {
 				log.Error("Unable to render time clock [%v]", err.Error())
 			} else {
-				cRenderClockChannel <- RenderCtx{text_img, charWidth, 1 * time.Second}
+				cRenderClockChannel <- RenderCtx{text_img, charWidth, 200 * time.Millisecond}
 				log.Debug("Clock..")
 
 			}
