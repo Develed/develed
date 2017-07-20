@@ -40,7 +40,6 @@ type RenderCtx struct {
 
 var cRenderTextChannel = make(chan RenderCtx, 1)
 var cRenderClockChannel = make(chan RenderCtx, 1)
-var cSyncChannel = make(chan bool)
 var cFrameWidth int = 39
 var cFrameHigh int = 9
 var cScollText string = "scroll"
@@ -69,8 +68,7 @@ func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResp
 		}, nil
 	}
 
-	cSyncChannel <- true
-	cRenderTextChannel <- RenderCtx{text_img, charWidth, conf.Textd.TextScrollTime * time.Millisecond, "scroll"}
+	cRenderTextChannel <- RenderCtx{text_img, charWidth, 300 * time.Millisecond}
 
 	return &srv.TextResponse{
 		Code:   0,
@@ -96,42 +94,7 @@ func blitFrame(dr_srv *server, img image.Image, draw_rect image.Rectangle) error
 
 func textRenderEfx(dr_srv *server, img image.Image, ctx RenderCtx) error {
 	var err error
-	switch ctx.efxType {
-	case cScollText:
-		for frame_idx := 0; ; frame_idx++ {
-			// Scrolling time..
-			time.Sleep(ctx.scrollTime)
-			err = blitFrame(dr_srv, img, image.Rect(cFrameWidth-frame_idx, 0, cFrameWidth, cFrameHigh))
-			if err != nil {
-				return err
-			}
-			if frame_idx >= (img.Bounds().Dx() + cFrameWidth) {
-				log.Debug("End frame wrap..")
-				return nil
-			}
-		}
-	case cFixText:
-		err = blitFrame(dr_srv, img, image.Rect(0, 0, cFrameWidth, cFrameHigh))
-		if err != nil {
-			return err
-		}
-	case cCenterText:
-		off := cFrameWidth - img.Bounds().Dx()
-		if off > 0 {
-			off = off / 2
-		} else {
-			off = 0
-		}
-		err = blitFrame(dr_srv, img, image.Rect(off, 0, cFrameWidth-off, cFrameHigh))
-		if err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func renderLoop(dr_srv *server) {
-	ctx := RenderCtx{nil, cFrameWidth, 0, "fix"}
+	ctx := RenderCtx{nil, cFrameWidth, 500 * time.Millisecond}
 	text_img := image.NewRGBA(image.Rect(0, 0, cFrameWidth, cFrameHigh))
 	//draw.Draw(text_img, text_img.Bounds(), &image.Uniform{color.RGBA{0, 255, 0, 255}}, image.ZP, draw.Src)
 
@@ -139,64 +102,72 @@ func renderLoop(dr_srv *server) {
 		select {
 		case ctx = <-cRenderTextChannel:
 			log.Debug("Text Render channel")
+			log.Debug(ctx)
 		case ctx = <-cRenderClockChannel:
 			log.Debug("Clock Render channel")
+			log.Debug(ctx)
 		default:
-			// Message from a channel lets render it
+			// Message from a channel lets render arrived image
 			if ctx.img != nil {
 				text_img = image.NewRGBA(ctx.img.Bounds())
 				draw.Draw(text_img, ctx.img.Bounds(), ctx.img, image.ZP, draw.Src)
 			}
-			err := textRenderEfx(dr_srv, text_img, ctx)
-			if err != nil {
-				log.Error(err.Error())
+
+			for frame_idx := 0; ; frame_idx++ {
+				// Scrolling time..
+				time.Sleep(ctx.scrollTime)
+
+				// Fill frame only with max char lenght
+				maxCharNum := cFrameWidth
+				if ctx.charWidth != 0 {
+					maxCharNum = (cFrameWidth / ctx.charWidth)
+				}
+				xStart := (maxCharNum - frame_idx) * ctx.charWidth
+				xStop := maxCharNum * ctx.charWidth
+
+				frame := image.NewRGBA(image.Rect(0, 0, cFrameWidth, cFrameHigh))
+				draw.Draw(frame, image.Rect(xStart, 0, xStop, cFrameHigh), text_img, image.ZP, draw.Src)
+				buf := &bytes.Buffer{}
+				png.Encode(buf, frame)
+
+				_, err = dr_srv.sink.Draw(context.Background(), &srv.DrawRequest{
+					Data: buf.Bytes(),
+				})
+				if err != nil {
+					log.Error(err.Error())
+					break
+				}
+
+				if (frame_idx+1)*ctx.charWidth >= (text_img.Bounds().Dx() + cFrameWidth) {
+					log.Debug("End frame wrap..")
+					break
+				}
 			}
 		}
 	}
+
 }
 
 func clockLoop() {
 	var err error
-	var loc *time.Location
 	txt_color := color.RGBA{255, 0, 0, 255}
 	txt_bg := color.RGBA{0, 0, 0, 255}
 
-	//set timezone,
-	loc, err = time.LoadLocation("Europe/Rome")
+	err = bitmapfont.Init(conf.Textd.FontPath, "", conf.BitmapFonts)
 	if err != nil {
-		log.Error("Unable go get time clock..")
 		panic(err)
 	}
 
-	var clockTickElapse time.Duration = 1 * time.Second
-	var flag bool = true
 	for {
 		select {
-		case <-cSyncChannel:
-			clockTickElapse = conf.Textd.TextStayTime * time.Second
-		case <-time.After(clockTickElapse):
-			now := time.Now().In(loc)
-			time_str := ""
-			if (now.Unix() % int64(conf.Textd.DateStayTime)) == 0 {
-				time_str = now.Format("02.01.06")
-				clockTickElapse = (conf.Textd.DateStayTime + 1) * time.Second
-			} else {
-				flag = !flag
-				time_str = now.Format("15:04")
-				if flag {
-					time_str = now.Format("15 04")
-				}
-				clockTickElapse = 1 * time.Second
-			}
-			err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.DatetimeFont, conf.BitmapFonts)
-			if err != nil {
-				panic(err)
-			}
-			text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
+		case <-time.After(10 * time.Second):
+			text_img, charWidth, err := bitmapfont.Render("12:00", txt_color, txt_bg, 1, 0)
 			if err != nil {
 				log.Error("Unable to render time clock [%v]", err.Error())
 			} else {
-				cRenderClockChannel <- RenderCtx{text_img, charWidth, 200 * time.Millisecond, "center"}
+				cRenderClockChannel <- RenderCtx{text_img, charWidth, 1 * time.Second}
+				log.Debug("Clock..")
+
 			}
 		}
 	}
