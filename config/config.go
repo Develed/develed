@@ -1,6 +1,10 @@
 package config
 
-import "github.com/BurntSushi/toml"
+import (
+	"time"
+
+	"github.com/BurntSushi/toml"
+)
 
 type Global struct {
 	DSPD        Dspd         `toml:"dspd"`
@@ -15,8 +19,13 @@ type Dspd struct {
 }
 
 type Textd struct {
-	GRPCServerAddress string `toml:"grpc_address"`
-	FontPath          string `toml:"font_path"`
+	GRPCServerAddress string        `toml:"grpc_address"`
+	FontPath          string        `toml:"font_path"`
+	DatetimeFont      string        `toml:"datatime_font"`
+	ShowSecond        bool          `toml:"show_second"`
+	DateStayTime      time.Duration `toml:"date_stay_time"`
+	TextStayTime      time.Duration `toml:"text_stay_time"`
+	TextScrollTime    time.Duration `toml:"text_scroll_time"`
 }
 
 type BitmapFont struct {
