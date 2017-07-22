@@ -69,7 +69,7 @@ func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResp
 	}
 
 	cSyncChannel <- true
-	cRenderTextChannel <- RenderCtx{text_img, charWidth, 200 * time.Millisecond, "scroll"}
+	cRenderTextChannel <- RenderCtx{text_img, charWidth, conf.Textd.TextScrollTime * time.Millisecond, "scroll"}
 
 	return &srv.TextResponse{
 		Code:   0,
@@ -119,7 +119,7 @@ func textRenderEfx(dr_srv *server, img image.Image, ctx RenderCtx) error {
 }
 
 func renderLoop(dr_srv *server) {
-	ctx := RenderCtx{nil, cFrameWidth, 100 * time.Millisecond, "fix"}
+	ctx := RenderCtx{nil, cFrameWidth, 0, "fix"}
 	text_img := image.NewRGBA(image.Rect(0, 0, cFrameWidth, cFrameHigh))
 	//draw.Draw(text_img, text_img.Bounds(), &image.Uniform{color.RGBA{0, 255, 0, 255}}, image.ZP, draw.Src)
 
@@ -149,7 +149,7 @@ func clockLoop() {
 	txt_color := color.RGBA{255, 0, 0, 255}
 	txt_bg := color.RGBA{0, 0, 0, 255}
 
-	err = bitmapfont.Init(conf.Textd.FontPath, "", conf.BitmapFonts)
+	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.DatetimeFont, conf.BitmapFonts)
 	if err != nil {
 		panic(err)
 	}
@@ -166,13 +166,13 @@ func clockLoop() {
 	for {
 		select {
 		case <-cSyncChannel:
-			clockTickElapse = 10 * time.Second
+			clockTickElapse = conf.Textd.TextStayTime * time.Second
 		case <-time.After(clockTickElapse):
 			now := time.Now().In(loc)
 			time_str := ""
-			if (now.Unix() % 10) == 0 {
+			if (now.Unix() % int64(conf.Textd.DateStayTime)) == 0 {
 				time_str = now.Format("02/01/2006")
-				clockTickElapse = 11 * time.Second
+				clockTickElapse = (conf.Textd.DateStayTime + 1) * time.Second
 			} else {
 				flag = !flag
 				time_str = now.Format("15:04")
