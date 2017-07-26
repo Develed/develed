@@ -21,7 +21,7 @@ type Dspd struct {
 type Textd struct {
 	GRPCServerAddress string        `toml:"grpc_address"`
 	FontPath          string        `toml:"font_path"`
-	DatetimeFont      string        `toml:"datatime_font"`
+	DatetimeFont      string        `toml:"datetime_font"`
 	ShowSecond        bool          `toml:"show_second"`
 	DateStayTime      time.Duration `toml:"date_stay_time"`
 	TextStayTime      time.Duration `toml:"text_stay_time"`
