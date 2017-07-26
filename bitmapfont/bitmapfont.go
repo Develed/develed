@@ -47,7 +47,6 @@ func Init(path string, name string, cfg []conf.BitmapFont) error {
 		log.Debug("Cerco font ", s.Name, " ", name)
 		if name == s.Name {
 			Config = s
-			log.Debug(path + string(os.PathSeparator) + Config.FileName)
 			reader, err := os.Open(path + string(os.PathSeparator) + Config.FileName)
 			if err != nil {
 				return err
