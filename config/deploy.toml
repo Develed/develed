@@ -4,7 +4,7 @@ grpc_address="localhost:20000"
 [textd]
 grpc_address="localhost:20001"
 font_path="/usr/share/develed/fonts"
-datetime_font=""
+datetime_font="font4x8"
 show_second=false
 date_stay_time=10 #second
 text_stay_time=60 #second
