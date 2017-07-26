@@ -45,6 +45,7 @@ var cFrameWidth int = 39
 var cFrameHigh int = 9
 var cScollText string = "scroll"
 var cFixText string = "fix"
+var cCenterText string = "center"
 var cBlinkText string = "blink"
 
 func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResponse, error) {
@@ -114,6 +115,17 @@ func textRenderEfx(dr_srv *server, img image.Image, ctx RenderCtx) error {
 		if err != nil {
 			return err
 		}
+	case cCenterText:
+		off := cFrameWidth - img.Bounds().Dx()
+		if off > 0 {
+			off = off / 2
+		} else {
+			off = 0
+		}
+		err = blitFrame(dr_srv, img, image.Rect(off, 0, cFrameWidth-off, cFrameHigh))
+		if err != nil {
+			return err
+		}
 	}
 	return nil
 }
@@ -150,11 +162,6 @@ func clockLoop() {
 	txt_color := color.RGBA{255, 0, 0, 255}
 	txt_bg := color.RGBA{0, 0, 0, 255}
 
-	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.DatetimeFont, conf.BitmapFonts)
-	if err != nil {
-		panic(err)
-	}
-
 	//set timezone,
 	loc, err = time.LoadLocation("Europe/Rome")
 	if err != nil {
@@ -172,7 +179,7 @@ func clockLoop() {
 			now := time.Now().In(loc)
 			time_str := ""
 			if (now.Unix() % int64(conf.Textd.DateStayTime)) == 0 {
-				time_str = now.Format("02/01/2006")
+				time_str = now.Format("02.01.06")
 				clockTickElapse = (conf.Textd.DateStayTime + 1) * time.Second
 			} else {
 				flag = !flag
@@ -182,12 +189,15 @@ func clockLoop() {
 				}
 				clockTickElapse = 1 * time.Second
 			}
+			err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.DatetimeFont, conf.BitmapFonts)
+			if err != nil {
+				panic(err)
+			}
 			text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
 			if err != nil {
 				log.Error("Unable to render time clock [%v]", err.Error())
 			} else {
-				cRenderClockChannel <- RenderCtx{text_img, charWidth, 200 * time.Millisecond, "fix"}
-				log.Debug("Clock..")
+				cRenderClockChannel <- RenderCtx{text_img, charWidth, 200 * time.Millisecond, "center"}
 			}
 		}
 	}
