@@ -27,6 +27,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/buger/goterm",
+			"repository": "https://github.com/buger/goterm",
+			"vcs": "git",
+			"revision": "2f8dfbc7dbbff5dd1d391ed91482c24df243b2d3",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/golang/glog",
 			"repository": "https://github.com/golang/glog",
 			"vcs": "git",
