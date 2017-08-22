@@ -28,7 +28,7 @@ func main() {
 	}
 
 	if !*debug {
-		sink, err = NewDeviceSink("/dev/dsp")
+		sink, err = NewDeviceSink("/dev/sscdev0")
 		if err != nil {
 			log.Fatalln(err)
 		}
