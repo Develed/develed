@@ -170,6 +170,7 @@ func clockLoop() {
 
 	var clockTickElapse time.Duration = 1 * time.Second
 	var flag bool = true
+	var show_date int = 30
 	for {
 		select {
 		case <-cSyncChannel:
@@ -177,9 +178,10 @@ func clockLoop() {
 		case <-time.After(clockTickElapse):
 			now := time.Now().In(loc)
 			time_str := ""
-			if (now.Unix() % int64(conf.Textd.DateStayTime)) == 0 {
+			if now.Unix()%int64(conf.Textd.DateStayTime) == 0 && (show_date <= 0) {
 				time_str = now.Format("02.01.06")
 				clockTickElapse = (conf.Textd.DateStayTime + 1) * time.Second
+				show_date = 30
 			} else {
 				flag = !flag
 				time_str = now.Format("15:04")
@@ -187,6 +189,7 @@ func clockLoop() {
 					time_str = now.Format("15 04")
 				}
 				clockTickElapse = 1 * time.Second
+				show_date--
 			}
 			err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.DatetimeFont, conf.BitmapFonts)
 			if err != nil {
