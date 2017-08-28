@@ -44,11 +44,11 @@ release: all
 
 test: all
 	$Q killall $(TARGETS) >/dev/null 2>&1 || true
-	$Q ./dspd -config config/sample.toml -debug &
-	$Q ./imaged -config config/sample.toml &
-	$Q ./textd -config config/sample.toml &
+	$Q ./dspd -config config/local.toml -debug &
+	$Q ./imaged -config config/local.toml &
+	$Q ./textd -config config/local.toml &
 	$Q sleep 0.5
-	$Q ./bot -config config/sample.toml -debug
+	$Q ./bot -config config/local.toml -debug
 	$Q killall $(DAEMONS) >/dev/null 2>&1
 
 clean:
