@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"errors"
+	"fmt"
 	"image"
 	_ "image/jpeg"
 	_ "image/png"
@@ -12,8 +13,6 @@ import (
 	srv "github.com/develed/develed/services"
 	"golang.org/x/crypto/ssh/terminal"
 	"golang.org/x/net/context"
-
-	tm "github.com/buger/goterm"
 )
 
 // TermSink redirects any image written to it to the terminal's stdout.
@@ -36,15 +35,16 @@ func (ts *TermSink) Draw(ctx context.Context, req *srv.DrawRequest) (*srv.DrawRe
 	}
 
 	sz := img.Bounds().Size()
-	tm.Clear()
-	tm.MoveCursor(0, 0)
 	for y := 0; y < sz.Y; y++ {
 		for x := 0; x < sz.X; x++ {
 			col := imconv.NormalizeColor(img.At(x, y))
-			tm.Printf("\033[48;2;%d;%d;%dm ", col.R, col.G, col.B)
+			if _, err := fmt.Printf("\033[48;2;%d;%d;%dm ", col.R, col.G, col.B); err != nil {
+				return nil, err
+			}
 		}
-		tm.Print("\033[0m\n")
+		if _, err := fmt.Print("\033[0m\n"); err != nil {
+			return nil, err
+		}
 	}
-	tm.Flush()
 	return &srv.DrawResponse{Code: 0, Status: "OK"}, nil
 }
