@@ -6,6 +6,7 @@ import (
 	"flag"
 	"fmt"
 	"image"
+	"image/draw"
 	_ "image/jpeg"
 	"image/png"
 	"io/ioutil"
@@ -70,9 +71,15 @@ func (s *server) Show(ctx context.Context, req *srv.ImageRequest) (*srv.ImageRes
 	if err != nil {
 		return nil, err
 	}
+	img = resize.Resize(0, 9, img, resize.Lanczos3)
+
+	dst := image.NewRGBA(image.Rect(0, 0, 39, 9))
+	r := img.Bounds().Add(image.Point{(39 - img.Bounds().Size().X) / 2, 0})
+
+	draw.Draw(dst, r, img, image.Point{0, 0}, draw.Src)
 
 	var out bytes.Buffer
-	png.Encode(&out, resize.Resize(39, 9, img, resize.Lanczos3))
+	png.Encode(&out, dst)
 
 	resp, err := s.sink.Draw(context.Background(), &srv.DrawRequest{
 		Data: out.Bytes(),
