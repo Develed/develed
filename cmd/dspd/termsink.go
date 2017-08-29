@@ -28,6 +28,10 @@ func NewTermSink() (*TermSink, error) {
 	return &TermSink{}, nil
 }
 
+func (ts *TermSink) Run() error {
+	select {}
+}
+
 func (ts *TermSink) Draw(ctx context.Context, req *srv.DrawRequest) (*srv.DrawResponse, error) {
 	img, _, err := image.Decode(bytes.NewReader(req.Data))
 	if err != nil {

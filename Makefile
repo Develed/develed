@@ -32,7 +32,7 @@ release: all
 	$Q rm -rf $(BUILD)
 	$Q mkdir -p $(IPKDIR)/usr/bin $(IPKDIR)/usr/share/develed $(IPKDIR)/etc/systemd/system
 	$Q cp $(TARGETS) $(IPKDIR)/usr/bin/
-	$Q cp config/sample.toml $(IPKDIR)/etc/develed.toml
+	$Q cp config/deploy.toml $(IPKDIR)/etc/develed.toml
 	$Q cp -R resources/* $(IPKDIR)/usr/share/develed/
 	$Q cp scripts/*.service $(IPKDIR)/etc/systemd/system/
 	$Q cp scripts/control scripts/postinst scripts/preinst $(BUILD)
