@@ -47,6 +47,7 @@ func (gs *GLSink) Run() error {
 	}
 	defer glfw.Terminate()
 
+	glfw.WindowHint(glfw.Floating, glfw.True)
 	glfw.WindowHint(glfw.Resizable, glfw.False)
 	glfw.WindowHint(glfw.ContextVersionMajor, 4)
 	glfw.WindowHint(glfw.ContextVersionMinor, 1)
