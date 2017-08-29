@@ -10,8 +10,8 @@ import (
 	"fmt"
 	"image"
 	"image/draw"
+	_ "image/jpeg"
 	_ "image/png"
-	"log"
 	"runtime"
 	"strings"
 
@@ -43,7 +43,7 @@ func NewGLSink() (*GLSink, error) {
 
 func (gs *GLSink) Run() error {
 	if err := glfw.Init(); err != nil {
-		log.Fatalln("failed to initialize glfw:", err)
+		return fmt.Errorf("failed to initialize glfw: %v", err)
 	}
 	defer glfw.Terminate()
 
@@ -55,19 +55,19 @@ func (gs *GLSink) Run() error {
 	glfw.WindowHint(glfw.OpenGLForwardCompatible, glfw.True)
 	window, err := glfw.CreateWindow(windowWidth, windowHeight, "Develed", nil, nil)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	window.MakeContextCurrent()
 
 	// Initialize Glow
 	if err := gl.Init(); err != nil {
-		panic(err)
+		return err
 	}
 
 	// Configure the vertex and fragment shaders
 	program, err := newProgram(vertexShader, fragmentShader)
 	if err != nil {
-		panic(err)
+		return err
 	}
 	gl.UseProgram(program)
 
