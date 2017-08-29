@@ -35,6 +35,24 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/go-gl/gl/v4.1-core/gl",
+			"repository": "https://github.com/go-gl/gl",
+			"vcs": "git",
+			"revision": "39ef8e959f4050148ec5a59816a93b9e65b4528f",
+			"branch": "master",
+			"path": "/v4.1-core/gl",
+			"notests": true
+		},
+		{
+			"importpath": "github.com/go-gl/glfw/v3.2/glfw",
+			"repository": "https://github.com/go-gl/glfw",
+			"vcs": "git",
+			"revision": "513e4f2bf85c31fba0fc4907abd7895242ccbe50",
+			"branch": "master",
+			"path": "/v3.2/glfw",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/golang/glog",
 			"repository": "https://github.com/golang/glog",
 			"vcs": "git",
