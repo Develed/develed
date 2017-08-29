@@ -38,6 +38,10 @@ func NewDeviceSink(devname string) (*DeviceSink, error) {
 	}, nil
 }
 
+func (ds *DeviceSink) Run() error {
+	select {}
+}
+
 func (ds *DeviceSink) Draw(ctx context.Context, req *srv.DrawRequest) (*srv.DrawResponse, error) {
 	img, _, err := image.Decode(bytes.NewReader(req.Data))
 	if err != nil {

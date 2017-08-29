@@ -16,8 +16,13 @@ var (
 	cfg   = flag.String("config", "/etc/develed.toml", "configuration file")
 )
 
+type ImageSink interface {
+	srv.ImageSinkServer
+	Run() error
+}
+
 func main() {
-	var sink srv.ImageSinkServer
+	var sink ImageSink
 	var err error
 
 	flag.Parse()
@@ -33,7 +38,7 @@ func main() {
 			log.Fatalln(err)
 		}
 	} else {
-		sink, err = NewTermSink()
+		sink, err = NewGLSink()
 		if err != nil {
 			log.Fatalln(err)
 		}
@@ -48,7 +53,13 @@ func main() {
 	srv.RegisterImageSinkServer(s, sink)
 	reflection.Register(s)
 
-	if err := s.Serve(sock); err != nil {
+	go func() {
+		if err := s.Serve(sock); err != nil {
+			log.Fatalln(err)
+		}
+	}()
+
+	if err := sink.Run(); err != nil {
 		log.Fatalln(err)
 	}
 }
