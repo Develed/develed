@@ -37,7 +37,8 @@ func (ts *TermSink) Draw(ctx context.Context, req *srv.DrawRequest) (*srv.DrawRe
 	if err != nil {
 		return nil, err
 	}
-
+	fmt.Print("\033[s")
+	fmt.Print("\n\n")
 	sz := img.Bounds().Size()
 	for y := 0; y < sz.Y; y++ {
 		for x := 0; x < sz.X; x++ {
@@ -50,5 +51,6 @@ func (ts *TermSink) Draw(ctx context.Context, req *srv.DrawRequest) (*srv.DrawRe
 			return nil, err
 		}
 	}
+	fmt.Print("\033[u")
 	return &srv.DrawResponse{Code: 0, Status: "OK"}, nil
 }

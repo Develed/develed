@@ -80,8 +80,9 @@ func (bot *Bot) startLocal() error {
 	log.Infoln("Running in local mode")
 
 	for {
+		fmt.Print("\033[50D")
+		fmt.Print("\033[K")
 		fmt.Print("> ")
-
 		cmd, err := br.ReadString('\n')
 		if err != nil {
 			if err == io.EOF {
