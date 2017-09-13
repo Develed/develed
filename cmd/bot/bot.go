@@ -64,22 +64,28 @@ func main() {
 
 	textd := srv.NewTextdClient(textdConn)
 	imaged := srv.NewImagedClient(imagedConn)
-
+	fmt.Print("\033[s")
 	bot.DefaultResponse(func(b *slackbot.Bot, msg *slack.Msg) {
+		fmt.Print("\033[K") //erase line
 		bot.Message(msg.Channel, "Non ho capito")
+		fmt.Print("\033[u")
 	})
-
+	fmt.Print("\033[K")
 	bot.RespondTo("^scrivi (.*)$", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
 		text := args[1]
-
 		_, err := textd.Write(context.Background(), &srv.TextRequest{
 			Text: text,
 		})
 		if err != nil {
 			log.Errorln(err)
 		} else {
+			fmt.Print("\033[K") //erase line
 			bot.Message(msg.Channel, "Hai scritto: "+text)
+			fmt.Print("\033[u")
+			fmt.Print("\033[K")
 		}
+		fmt.Print("\033[u") //restore position
+		fmt.Print("\033[K")
 	})
 
 	bot.RespondTo("^mostra <?(https?://.*?)>?$", func(b *slackbot.Bot, msg *slack.Msg, args ...string) {
