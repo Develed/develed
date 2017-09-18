@@ -8,7 +8,9 @@ service ImageSink {
 }
 
 message DrawRequest {
-    bytes data = 1;
+    int64 priority = 1;
+    int64 timeslot = 2;
+    bytes data = 3;
 }
 
 message DrawResponse {
