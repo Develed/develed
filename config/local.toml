@@ -3,6 +3,7 @@ grpc_address="localhost:20000"
 
 [textd]
 grpc_address="localhost:20001"
+priority=0 #0 Minor, 10 Max
 font_path="resources/fonts"
 datetime_font="font4x8"
 show_second=false
@@ -24,6 +25,7 @@ width=4
 
 [imaged]
 grpc_address="localhost:20002"
+priority=1 #0 Minor, 10 Max
 
 [bot]
 slack_token=":slack_bot_token:"

@@ -20,6 +20,7 @@ type Dspd struct {
 
 type Textd struct {
 	GRPCServerAddress string        `toml:"grpc_address"`
+	Priority          int           `toml:"priority"`
 	FontPath          string        `toml:"font_path"`
 	DatetimeFont      string        `toml:"datetime_font"`
 	ShowSecond        bool          `toml:"show_second"`
@@ -37,6 +38,7 @@ type BitmapFont struct {
 
 type Imaged struct {
 	GRPCServerAddress string `toml:"grpc_address"`
+	Priority          int    `toml:"priority"`
 }
 
 type Bot struct {
