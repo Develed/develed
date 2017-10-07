@@ -15,6 +15,7 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/develed/develed/queue"
 	srv "github.com/develed/develed/services"
 	"github.com/go-gl/gl/v4.1-core/gl"
 	"github.com/go-gl/glfw/v3.2/glfw"
@@ -34,11 +35,17 @@ type GLSink struct {
 	C chan *image.RGBA
 }
 
+var framQueue queue.Queue
+
 // NewGLSink creates a new GLSink.
 func NewGLSink() (*GLSink, error) {
-	return &GLSink{
+	gsCtx := &GLSink{
 		C: make(chan *image.RGBA, 1),
-	}, nil
+	}
+
+	go GLxDrawRoutine(&framQueue, gsCtx)
+
+	return gsCtx, nil
 }
 
 func (gs *GLSink) Run() error {
@@ -126,17 +133,25 @@ func (gs *GLSink) Run() error {
 }
 
 func (gs *GLSink) Draw(ctx context.Context, req *srv.DrawRequest) (*srv.DrawResponse, error) {
-	src, _, err := image.Decode(bytes.NewReader(req.Data))
-	if err != nil {
-		return nil, err
-	}
-
-	// Convert to RGBA format
-	img := image.NewRGBA(src.Bounds())
-	draw.Draw(img, img.Bounds(), src, image.Point{0, 0}, draw.Src)
-	gs.C <- img
-
+	framQueue.Push(&queue.Node{req.Priority, req.Timeslot, req.Data})
 	return &srv.DrawResponse{Code: 0, Status: "OK"}, nil
+}
+
+func GLxDrawRoutine(framQueue *queue.Queue, gs *GLSink) {
+	for {
+		node := framQueue.Pop()
+		if node != nil {
+			src, _, err := image.Decode(bytes.NewReader(node.Data))
+			if err != nil {
+				continue
+			}
+
+			// Convert to RGBA format
+			img := image.NewRGBA(src.Bounds())
+			draw.Draw(img, img.Bounds(), src, image.Point{0, 0}, draw.Src)
+			gs.C <- img
+		}
+	}
 }
 
 func newProgram(vertexShaderSource, fragmentShaderSource string) (uint32, error) {
