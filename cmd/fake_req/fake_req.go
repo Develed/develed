@@ -1,13 +1,7 @@
 package main
 
 import (
-	"bytes"
 	"flag"
-	"fmt"
-	"image"
-	"image/color"
-	"image/draw"
-	"image/png"
 
 	log "github.com/Sirupsen/logrus"
 	"github.com/develed/develed/config"
@@ -15,11 +9,11 @@ import (
 
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
 )
 
 var (
-	cfg = flag.String("config", "/home/matteopieraccioni/go/src/github.com/develed/develed/config/local.toml", "configuration file")
+	cfg   = flag.String("config", "/etc/develed.toml", "configuration file")
+	debug = flag.Bool("debug", false, "Write to textd")
 )
 
 type server struct {
@@ -45,73 +39,73 @@ func main() {
 		text = flag.Arg(0)
 	}
 
-	//	conn, err := grpc.Dial(conf.Textd.GRPCServerAddress, grpc.WithInsecure())
-	//	if err != nil {
-	//		log.Fatalln(err)
-	//	}
-	//	defer conn.Close()
-	//
-	//	textd := srv.NewTextdClient(conn)
-	//	resp, err := textd.Write(context.Background(), &srv.TextRequest{
-	//		Text:      text,
-	//		FontColor: 0xFFAABBCC,
-	//		FontBg:    0x00112233,
-	//	})
-	//	if err != nil {
-	//		log.Errorln(err)
-	//	}
-	//	log.Info(resp.Status, " ", resp.Code)
-	//
-	conn, err := grpc.Dial(conf.DSPD.GRPCServerAddress, grpc.WithInsecure())
+	conn, err := grpc.Dial(conf.Textd.GRPCServerAddress, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalln(err)
 	}
 	defer conn.Close()
 
-	s := grpc.NewServer()
-	drawing_srv := &server{sink: srv.NewImageSinkClient(conn)}
-	srv.RegisterTextdServer(s, drawing_srv)
-	reflection.Register(s)
-
-	frame := image.NewRGBA(image.Rect(0, 0, 39, 9))
-	draw.Draw(frame, frame.Bounds(), &image.Uniform{color.RGBA{0, 255, 0, 255}}, image.ZP, draw.Src)
-	buf := &bytes.Buffer{}
-	png.Encode(buf, frame)
-	resp, err := drawing_srv.sink.Draw(context.Background(), &srv.DrawRequest{
-		Priority: int64(10),
-		Timeslot: int64(9),
-		Data:     buf.Bytes(),
+	textd := srv.NewTextdClient(conn)
+	resp, err := textd.Write(context.Background(), &srv.TextRequest{
+		Text:      text,
+		FontColor: 0xFFAABBCC,
+		FontBg:    0x00112233,
 	})
+	if err != nil {
+		log.Errorln(err)
+	}
+	log.Info(resp.Status, " ", resp.Code)
+	//
+	//conn, err := grpc.Dial(conf.DSPD.GRPCServerAddress, grpc.WithInsecure())
+	//if err != nil {
+	//	log.Fatalln(err)
+	//}
+	//defer conn.Close()
 
-	frame = image.NewRGBA(image.Rect(0, 0, 39, 9))
-	draw.Draw(frame, frame.Bounds(), &image.Uniform{color.RGBA{255, 0, 255, 255}}, image.ZP, draw.Src)
-	buf = &bytes.Buffer{}
-	png.Encode(buf, frame)
-	resp, err = drawing_srv.sink.Draw(context.Background(), &srv.DrawRequest{
-		Priority: int64(10),
-		Timeslot: int64(9),
-		Data:     buf.Bytes(),
-	})
+	//s := grpc.NewServer()
+	//drawing_srv := &server{sink: srv.NewImageSinkClient(conn)}
+	//srv.RegisterTextdServer(s, drawing_srv)
+	//reflection.Register(s)
 
-	frame = image.NewRGBA(image.Rect(0, 0, 39, 9))
-	draw.Draw(frame, frame.Bounds(), &image.Uniform{color.RGBA{200, 50, 180, 255}}, image.ZP, draw.Src)
-	buf = &bytes.Buffer{}
-	png.Encode(buf, frame)
-	resp, err = drawing_srv.sink.Draw(context.Background(), &srv.DrawRequest{
-		Priority: int64(10),
-		Timeslot: int64(9),
-		Data:     buf.Bytes(),
-	})
+	//frame := image.NewRGBA(image.Rect(0, 0, 39, 9))
+	//draw.Draw(frame, frame.Bounds(), &image.Uniform{color.RGBA{0, 255, 0, 255}}, image.ZP, draw.Src)
+	//buf := &bytes.Buffer{}
+	//png.Encode(buf, frame)
+	//resp, err := drawing_srv.sink.Draw(context.Background(), &srv.DrawRequest{
+	//	Priority: int64(10),
+	//	Timeslot: int64(9),
+	//	Data:     buf.Bytes(),
+	//})
 
-	frame = image.NewRGBA(image.Rect(0, 0, 39, 9))
-	draw.Draw(frame, frame.Bounds(), &image.Uniform{color.RGBA{10, 10, 10, 255}}, image.ZP, draw.Src)
-	buf = &bytes.Buffer{}
-	png.Encode(buf, frame)
-	resp, err = drawing_srv.sink.Draw(context.Background(), &srv.DrawRequest{
-		Priority: int64(10),
-		Timeslot: int64(9),
-		Data:     buf.Bytes(),
-	})
-	fmt.Println(text, resp.Status)
+	//frame = image.NewRGBA(image.Rect(0, 0, 39, 9))
+	//draw.Draw(frame, frame.Bounds(), &image.Uniform{color.RGBA{255, 0, 255, 255}}, image.ZP, draw.Src)
+	//buf = &bytes.Buffer{}
+	//png.Encode(buf, frame)
+	//resp, err = drawing_srv.sink.Draw(context.Background(), &srv.DrawRequest{
+	//	Priority: int64(10),
+	//	Timeslot: int64(9),
+	//	Data:     buf.Bytes(),
+	//})
+
+	//frame = image.NewRGBA(image.Rect(0, 0, 39, 9))
+	//draw.Draw(frame, frame.Bounds(), &image.Uniform{color.RGBA{200, 50, 180, 255}}, image.ZP, draw.Src)
+	//buf = &bytes.Buffer{}
+	//png.Encode(buf, frame)
+	//resp, err = drawing_srv.sink.Draw(context.Background(), &srv.DrawRequest{
+	//	Priority: int64(10),
+	//	Timeslot: int64(9),
+	//	Data:     buf.Bytes(),
+	//})
+
+	//frame = image.NewRGBA(image.Rect(0, 0, 39, 9))
+	//draw.Draw(frame, frame.Bounds(), &image.Uniform{color.RGBA{10, 10, 10, 255}}, image.ZP, draw.Src)
+	//buf = &bytes.Buffer{}
+	//png.Encode(buf, frame)
+	//resp, err = drawing_srv.sink.Draw(context.Background(), &srv.DrawRequest{
+	//	Priority: int64(10),
+	//	Timeslot: int64(9),
+	//	Data:     buf.Bytes(),
+	//})
+	//fmt.Println(text, resp.Status)
 
 }
