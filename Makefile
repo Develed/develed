@@ -25,8 +25,12 @@ imaged:
 	$Q go build ./cmd/imaged
 fake:
 	$Q go build ./cmd/fake_req
+clock:
+	$Q go build ./cmd/clock
 proto:
 	$Q protoc -I services/ services/services.proto --go_out=plugins=grpc:services
+
+multi: proto textd dspd clock fake
 
 release: all
 	$Q rm -rf $(BUILD)

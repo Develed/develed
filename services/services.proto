@@ -53,3 +53,17 @@ message ImageResponse {
     int32 code = 1;
     string status = 2;
 }
+
+// === Generic service ===
+service Generic {
+    rpc Write (GenericRequest) returns (GenericResponse) {}
+}
+
+message GenericRequest {
+}
+
+message GenericResponse {
+    int32 code = 1;
+    string status = 2;
+}
+

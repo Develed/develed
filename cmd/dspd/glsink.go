@@ -14,6 +14,7 @@ import (
 	_ "image/png"
 	"runtime"
 	"strings"
+	"time"
 
 	"github.com/develed/develed/queue"
 	srv "github.com/develed/develed/services"
@@ -138,6 +139,7 @@ func (gs *GLSink) Draw(ctx context.Context, req *srv.DrawRequest) (*srv.DrawResp
 }
 
 func GLxDrawRoutine(framQueue *queue.Queue, gs *GLSink) {
+	time.Sleep(10 * time.Second)
 	for {
 		node := framQueue.Pop()
 		if node != nil {
@@ -149,8 +151,11 @@ func GLxDrawRoutine(framQueue *queue.Queue, gs *GLSink) {
 			// Convert to RGBA format
 			img := image.NewRGBA(src.Bounds())
 			draw.Draw(img, img.Bounds(), src, image.Point{0, 0}, draw.Src)
+			time.Sleep(time.Duration(node.TimeSlot)*time.Millisecond + 1)
+
 			gs.C <- img
 		}
+		fmt.Print()
 	}
 }
 
