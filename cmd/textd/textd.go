@@ -153,7 +153,6 @@ func renderLoop(dr_srv *server) {
 			}
 		}
 	}
-
 }
 
 func clockLoop() {
