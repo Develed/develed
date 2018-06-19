@@ -38,7 +38,7 @@ func main() {
 			log.Fatalln(err)
 		}
 	} else {
-		sink, err = NewGLSink()
+		sink, err = NewTermSink()
 		if err != nil {
 			log.Fatalln(err)
 		}
