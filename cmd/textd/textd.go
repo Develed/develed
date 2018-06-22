@@ -3,6 +3,7 @@ package main
 import (
 	"bytes"
 	"flag"
+	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
@@ -69,7 +70,6 @@ func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResp
 		}, nil
 	}
 
-	cSyncChannel <- true
 	cRenderTextChannel <- RenderCtx{text_img, charWidth, conf.Textd.TextScrollTime * time.Millisecond, "scroll"}
 
 	return &srv.TextResponse{
@@ -78,14 +78,14 @@ func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResp
 	}, nil
 }
 
-func blitFrame(dr_srv *server, img image.Image, draw_rect image.Rectangle) error {
+func blitFrame(sink ImageSink, img image.Image, draw_rect image.Rectangle) error {
 	frame := image.NewRGBA(image.Rect(0, 0, cFrameWidth, cFrameHigh))
 	if img != nil {
 		draw.Draw(frame, draw_rect, img, image.ZP, draw.Src)
 	}
 	buf := &bytes.Buffer{}
 	png.Encode(buf, frame)
-	_, err := dr_srv.sink.Draw(context.Background(), &srv.DrawRequest{
+	_, err := sink.Draw(context.Background(), &srv.DrawRequest{
 		Data: buf.Bytes(),
 	})
 	if err != nil {
@@ -94,14 +94,14 @@ func blitFrame(dr_srv *server, img image.Image, draw_rect image.Rectangle) error
 	return nil
 }
 
-func textRenderEfx(dr_srv *server, img image.Image, ctx RenderCtx) error {
+func textRenderEfx(sink ImageSink, img image.Image, ctx RenderCtx) error {
 	var err error
 	switch ctx.efxType {
 	case cScollText:
 		for frame_idx := 0; ; frame_idx++ {
 			// Scrolling time..
 			time.Sleep(ctx.scrollTime)
-			err = blitFrame(dr_srv, img, image.Rect(cFrameWidth-frame_idx, 0, cFrameWidth, cFrameHigh))
+			err = blitFrame(sink, img, image.Rect(cFrameWidth-frame_idx, 0, cFrameWidth, cFrameHigh))
 			if err != nil {
 				return err
 			}
@@ -111,7 +111,7 @@ func textRenderEfx(dr_srv *server, img image.Image, ctx RenderCtx) error {
 			}
 		}
 	case cFixText:
-		err = blitFrame(dr_srv, img, image.Rect(0, 0, cFrameWidth, cFrameHigh))
+		err = blitFrame(sink, img, image.Rect(0, 0, cFrameWidth, cFrameHigh))
 		if err != nil {
 			return err
 		}
@@ -122,7 +122,7 @@ func textRenderEfx(dr_srv *server, img image.Image, ctx RenderCtx) error {
 		} else {
 			off = 0
 		}
-		err = blitFrame(dr_srv, img, image.Rect(off, 0, cFrameWidth-off, cFrameHigh))
+		err = blitFrame(sink, img, image.Rect(off, 0, cFrameWidth-off, cFrameHigh))
 		if err != nil {
 			return err
 		}
@@ -130,25 +130,29 @@ func textRenderEfx(dr_srv *server, img image.Image, ctx RenderCtx) error {
 	return nil
 }
 
-func renderLoop(dr_srv *server) {
+func renderLoop(sink ImageSink) {
+	fmt.Println("render loop")
 	ctx := RenderCtx{nil, cFrameWidth, 0, "fix"}
 
 	for {
+		fmt.Println("for di render loop")
 		select {
 		case ctx = <-cRenderImgChannel:
 			log.Debug("Text Render channel")
+			//time.Sleep(2 * time.Second)
 		default:
 			// Message from a channel lets render it
 			if ctx.img != nil {
-				blitFrame(dr_srv, ctx.img, image.Rect(0, 0, cFrameWidth, cFrameHigh))
+				blitFrame(sink, ctx.img, image.Rect(0, 0, cFrameWidth, cFrameHigh))
 			}
 		}
 	}
 }
 
-type LoopFunc func(*server)
+type LoopFunc func(sink ImageSink)
 
-func generazioneImmagini(dr_srv *server) {
+func generazioneImmagini(sink ImageSink) {
+	fmt.Println("generazione immagini")
 	clock := clock
 	var loop = []struct {
 		f    LoopFunc
@@ -165,24 +169,26 @@ func generazioneImmagini(dr_srv *server) {
 	//cxt := RenderCtx{nil, cFrameWidth, 0, "fix"}
 
 	for {
+		fmt.Println("fir di generaz. immagini")
 		select {
 		case cxt := <-cRenderTextChannel:
 			if cxt.img != nil {
 				cRenderImgChannel <- cxt
 			}
 		default:
+			print("default")
 			// text_img := image.NewRGBA(image.Rect(0, 0, cFrameWidth, cFrameHigh))
 			// draw.Draw(text_img, text_img.Bounds(), &image.Uniform{color.RGBA{0, 255, 0, 255}}, image.ZP, draw.Src)
 			// blitFrame(dr_srv, text_img, image.Rect(0, 0, cFrameWidth, cFrameHigh))
 			appo := loop[cont]
-			appo.f(dr_srv)
-			//clock(dr_srv) //ultima cosa aggiunta, non so se va bene
+			appo.f(sink)
 		}
 	}
 
 }
 
-func clock(dr_srv *server) {
+func clock(sink ImageSink) {
+	fmt.Println("clock")
 	var err error
 	var loc *time.Location
 	txt_color := color.RGBA{255, 0, 0, 255}
@@ -220,10 +226,17 @@ func clock(dr_srv *server) {
 		panic(err)
 	}
 	text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
-	cRenderImgChannel <- RenderCtx{text_img, charWidth, conf.Textd.TextScrollTime * time.Millisecond, "scroll"}
+	cRenderImgChannel <- RenderCtx{text_img, charWidth, 500 * time.Millisecond, "scroll"}
+}
+
+type ImageSink interface {
+	srv.ImageSinkServer
+	Run() error
 }
 
 func main() {
+
+	var sink ImageSink
 	var err error
 
 	flag.Parse()
@@ -237,26 +250,43 @@ func main() {
 		log.SetLevel(log.DebugLevel)
 	}
 
+	if !*debug {
+		sink, err = NewDeviceSink("/dev/sscdev0")
+		if err != nil {
+			log.Fatalln(err)
+		}
+	} else {
+		fmt.Println("debug")
+
+		sink, err = NewTermSink()
+		if err != nil {
+			log.Fatalln(err)
+		} else {
+			fmt.Println("BO")
+		}
+	}
+
 	sock, err := net.Listen("tcp", conf.Textd.GRPCServerAddress)
 	if err != nil {
 		log.Fatalln(err)
 	}
 
-	conn, err := grpc.Dial(conf.DSPD.GRPCServerAddress, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalln(err)
-	}
-	defer conn.Close()
+	// conn, err := grpc.Dial(conf.DSPD.GRPCServerAddress, grpc.WithInsecure())
+	// if err != nil {
+	// 	log.Fatalln(err)
+	// }
+	// defer conn.Close()
 
 	s := grpc.NewServer()
-	drawing_srv := &server{sink: srv.NewImageSinkClient(conn)}
-
+	drawing_srv := &server{sink: srv.NewImageSinkClient(nil)}
 	srv.RegisterTextdServer(s, drawing_srv)
 	reflection.Register(s)
-	go renderLoop(drawing_srv)
-	go generazioneImmagini(drawing_srv)
+
+	go renderLoop(sink)
+	go generazioneImmagini(sink)
 
 	if err := s.Serve(sock); err != nil {
 		log.Fatalln(err)
 	}
+
 }
