@@ -139,7 +139,7 @@ func renderLoop(sink ImageSink) {
 		select {
 		case ctx = <-cRenderImgChannel:
 			log.Debug("Text Render channel")
-			//time.Sleep(2 * time.Second)
+
 		default:
 			// Message from a channel lets render it
 			if ctx.img != nil {
@@ -174,6 +174,7 @@ func generazioneImmagini(sink ImageSink) {
 		case cxt := <-cRenderTextChannel:
 			if cxt.img != nil {
 				cRenderImgChannel <- cxt
+				time.Sleep(2 * time.Second)
 			}
 		default:
 			print("default")
