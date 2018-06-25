@@ -41,6 +41,7 @@ type RenderCtx struct {
 
 var cRenderTextChannel = make(chan RenderCtx, 1)
 var cRenderImgChannel = make(chan RenderCtx, 1)
+var priorita bool = false
 var cSyncChannel = make(chan bool)
 var cFrameWidth int = 39
 var cFrameHigh int = 9
@@ -133,26 +134,31 @@ func textRenderEfx(sink ImageSink, img image.Image, ctx RenderCtx) error {
 func renderLoop(sink ImageSink) {
 	fmt.Println("render loop")
 	ctx := RenderCtx{nil, cFrameWidth, 0, "fix"}
-
 	for {
-		fmt.Println("for di render loop")
-		select {
-		case ctx = <-cRenderImgChannel:
-			log.Debug("Text Render channel")
+		appo := priorita
+		for (!priorita && !appo) || (appo) {
+			fmt.Println("for di render loop")
+			select {
+			case ctx = <-cRenderImgChannel:
+				log.Debug("Text Render channel")
 
-		default:
-			// Message from a channel lets render it
-			if ctx.img != nil {
-				blitFrame(sink, ctx.img, image.Rect(0, 0, cFrameWidth, cFrameHigh))
+			default:
+				// Message from a channel lets render it
+				if ctx.img != nil {
+					textRenderEfx(sink, ctx.img, ctx)
+				}
 			}
 		}
+		priorita = false
 	}
+
 }
 
 type LoopFunc func(sink ImageSink)
 
 func generazioneImmagini(sink ImageSink) {
 	fmt.Println("generazione immagini")
+
 	clock := clock
 	var loop = []struct {
 		f    LoopFunc
@@ -162,25 +168,18 @@ func generazioneImmagini(sink ImageSink) {
 	}
 
 	cont := 0
-	// var err error
-	// txt_color := color.RGBA{255, 0, 0, 255}
-	// txt_bg := color.RGBA{0, 0, 0, 255}
-
-	//cxt := RenderCtx{nil, cFrameWidth, 0, "fix"}
 
 	for {
 		fmt.Println("fir di generaz. immagini")
 		select {
 		case cxt := <-cRenderTextChannel:
 			if cxt.img != nil {
+				priorita = true
 				cRenderImgChannel <- cxt
 				time.Sleep(2 * time.Second)
 			}
 		default:
 			print("default")
-			// text_img := image.NewRGBA(image.Rect(0, 0, cFrameWidth, cFrameHigh))
-			// draw.Draw(text_img, text_img.Bounds(), &image.Uniform{color.RGBA{0, 255, 0, 255}}, image.ZP, draw.Src)
-			// blitFrame(dr_srv, text_img, image.Rect(0, 0, cFrameWidth, cFrameHigh))
 			appo := loop[cont]
 			appo.f(sink)
 		}
@@ -227,7 +226,7 @@ func clock(sink ImageSink) {
 		panic(err)
 	}
 	text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
-	cRenderImgChannel <- RenderCtx{text_img, charWidth, 500 * time.Millisecond, "scroll"}
+	cRenderImgChannel <- RenderCtx{text_img, charWidth, 100 * time.Millisecond, "scroll"}
 }
 
 type ImageSink interface {
