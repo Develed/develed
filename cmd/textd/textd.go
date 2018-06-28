@@ -159,7 +159,11 @@ func generazioneImmagini() {
 		f    LoopFunc
 		time time.Duration
 	}{
-		{clock, 500},
+		{clock, 6},
+		{binClock, 6},
+		{date, 6},
+		{Bindate, 6},
+		{saluto, 10},
 	}
 	cont := 0
 	ticker := time.NewTicker(time.Second)
@@ -175,10 +179,18 @@ func generazioneImmagini() {
 				time.Sleep(cxt.Time)
 			}
 		case tempo := <-ticker.C:
-			if now.Sub(tempo) < loop[cont].time {
+			fmt.Println(tempo.Sub(now))
+			if tempo.Sub(now) < loop[cont].time {
+				fmt.Println("TEMPO ANCORA NON SCADUTO")
 				appo := loop[cont]
 				cRenderImgChannel <- appo.f()
 			} else {
+				fmt.Println("CAMBIO TURNO")
+				if cont == 4 {
+					cont = 0
+				} else {
+					cont = cont + 1
+				}
 				appo := loop[cont]
 				cRenderImgChannel <- appo.f()
 				now = time.Now()
@@ -186,6 +198,48 @@ func generazioneImmagini() {
 		}
 
 	}
+}
+
+func binClock() RenderCtx {
+	fmt.Println("clock")
+	var err error
+	var loc *time.Location
+	txt_color := color.RGBA{255, 0, 0, 255}
+	txt_bg := color.RGBA{0, 0, 0, 255}
+
+	//set timezone,
+	loc, err = time.LoadLocation("Europe/Rome")
+	if err != nil {
+		log.Error("Unable go get time clock..")
+		panic(err)
+	}
+	var flag bool = true
+	var show_date int = 30
+	now := time.Now().In(loc)
+	time_str := ""
+	if now.Unix()%int64(conf.Textd.DateStayTime) == 0 && (show_date <= 0) {
+		time_str = now.Format("02.01.06")
+		show_date = 30
+	} else {
+		flag = !flag
+		time_str = now.Format("15:04")
+		if flag {
+			time_str = now.Format("15 04")
+		}
+		show_date--
+	}
+
+	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.BitdatetimeFont, conf.BitmapFonts)
+	if err != nil {
+		panic(err)
+	}
+	print(time_str)
+	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.BitdatetimeFont, conf.BitmapFonts)
+	if err != nil {
+		panic(err)
+	}
+	text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
+	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
 }
 
 func clock() RenderCtx {
@@ -228,6 +282,118 @@ func clock() RenderCtx {
 	}
 	text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
 	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
+}
+
+func date() RenderCtx {
+	fmt.Println("clock")
+	var err error
+	var loc *time.Location
+	txt_color := color.RGBA{255, 0, 0, 255}
+	txt_bg := color.RGBA{0, 0, 0, 255}
+
+	//set timezone,
+	loc, err = time.LoadLocation("Europe/Rome")
+	if err != nil {
+		log.Error("Unable go get time clock..")
+		panic(err)
+	}
+	now := time.Now().In(loc)
+	time_str := ""
+	time_str = now.Format("02.01.06")
+
+	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.DatetimeFont, conf.BitmapFonts)
+	if err != nil {
+		panic(err)
+	}
+	print(time_str)
+	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.DatetimeFont, conf.BitmapFonts)
+	if err != nil {
+		panic(err)
+	}
+	text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
+	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
+}
+
+func Bindate() RenderCtx {
+	fmt.Println("clock")
+	var err error
+	var loc *time.Location
+	txt_color := color.RGBA{255, 0, 0, 255}
+	txt_bg := color.RGBA{0, 0, 0, 255}
+
+	//set timezone,
+	loc, err = time.LoadLocation("Europe/Rome")
+	if err != nil {
+		log.Error("Unable go get time clock..")
+		panic(err)
+	}
+	now := time.Now().In(loc)
+	time_str := ""
+	time_str = now.Format("02.01.06")
+
+	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.BitdatetimeFont, conf.BitmapFonts)
+	if err != nil {
+		panic(err)
+	}
+	print(time_str)
+	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.BitdatetimeFont, conf.BitmapFonts)
+	if err != nil {
+		panic(err)
+	}
+	text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
+	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
+}
+
+func saluto() RenderCtx {
+	var err error
+
+	var loc *time.Location
+	txt_color := color.RGBA{255, 0, 0, 255}
+	txt_bg := color.RGBA{0, 0, 0, 255}
+
+	//set timezone,
+	loc, err = time.LoadLocation("Europe/Rome")
+	if err != nil {
+		log.Error("Unable go get time clock..")
+		panic(err)
+	}
+	now := time.Now().In(loc)
+	ore := now.Hour()
+
+	str := "BUONGIORNISSIMO, CAFFE' ? "
+	gg := now.Weekday()
+	if ore >= 11 {
+		if (gg == time.Wednesday) || (gg == time.Thursday) || (gg == time.Friday) {
+			str = "EI RICORDATI DI ORDINARE IL CIBO! "
+		} else {
+			str = "CIAO, COME STA ANDANDO LA GIORNATA? "
+		}
+	}
+	fmt.Println(str)
+	if ore >= 12 {
+		str = "CIAO, COME STA ANDANDO LA GIORNATA? "
+	}
+	fmt.Println(str)
+	if ore >= 18 {
+		if gg == time.Friday {
+			str = "BUON FINE SETTIMANA, RICORDA DI SEGNARE LE ORE E DI PASSARE DAL NANO VERDE  "
+		}
+	}
+	fmt.Println(str)
+	if ore >= 19 {
+		str = "CIAO, SPERO CHE LA TUA GIORNATA SIA ANDATA BENE "
+	}
+	fmt.Println(str)
+	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.SimboliFont, conf.BitmapFonts)
+	if err != nil {
+		panic(err)
+	}
+	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.SimboliFont, conf.BitmapFonts)
+	if err != nil {
+		panic(err)
+	}
+	text_img, charWidth, err := bitmapfont.Render(str, txt_color, txt_bg, 1, 0)
+	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "scroll", 500 * time.Millisecond}
 }
 
 type ImageSink interface {
