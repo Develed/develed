@@ -360,7 +360,7 @@ func saluto() RenderCtx {
 	now := time.Now().In(loc)
 	ore := now.Hour()
 
-	str := "BUONGIORNISSIMO, CAFFE' ? "
+	str := "BUONGIORNISSIMO, buon lavoro"
 	gg := now.Weekday()
 	if ore >= 11 {
 		if (gg == time.Wednesday) || (gg == time.Thursday) || (gg == time.Friday) {
@@ -393,7 +393,7 @@ func saluto() RenderCtx {
 		panic(err)
 	}
 	text_img, charWidth, err := bitmapfont.Render(str, txt_color, txt_bg, 1, 0)
-	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "scroll", 500 * time.Millisecond}
+	return RenderCtx{text_img, charWidth, 10 * time.Millisecond, "scroll", 50 * time.Millisecond}
 }
 
 type ImageSink interface {

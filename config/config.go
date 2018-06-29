@@ -23,6 +23,8 @@ type Textd struct {
 	Priority          int           `toml:"priority"`
 	FontPath          string        `toml:"font_path"`
 	DatetimeFont      string        `toml:"datetime_font"`
+	BitdatetimeFont   string        `toml:"bitdatetime_font"`
+	SimboliFont       string        `toml:"simboli_font"`
 	ShowSecond        bool          `toml:"show_second"`
 	DateStayTime      time.Duration `toml:"date_stay_time"`
 	TextStayTime      time.Duration `toml:"text_stay_time"`

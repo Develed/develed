@@ -6,6 +6,8 @@ grpc_address="localhost:20001"
 priority=0 #0 Minor, 10 Max
 font_path="resources/fonts"
 datetime_font="font4x9"
+bitdatetime_font="fontbit5x9"
+simboli_font="font5x7"
 show_second=false
 date_stay_time=10 #second
 text_stay_time=60 #second
@@ -35,4 +37,5 @@ priority=1 #0 Minor, 10 Max
 
 [bot]
 slack_token=":slack_bot_token:"
+
 

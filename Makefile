@@ -13,7 +13,7 @@ endif
 
 .PHONY: $(TARGETS) proto release
 
-all: proto $(TARGETS)
+all: $(TARGETS)
 
 bot:
 	$Q go build ./cmd/bot
