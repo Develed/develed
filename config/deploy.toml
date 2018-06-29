@@ -4,7 +4,9 @@ grpc_address="localhost:20000"
 [textd]
 grpc_address="localhost:20001"
 font_path="/usr/share/develed/fonts"
-datetime_font="font4x8"
+datetime_font="font4x9"
+bitdatetime_font="fontbit5x9"
+simboli_font="font5x7"
 show_second=false
 date_stay_time=10 #second
 text_stay_time=60 #second
@@ -17,10 +19,16 @@ high=7
 width=5
 
 [[bitmapfont]]
-name="font4x8"
-filename="font4x8.png"
-high=8
+name="font4x9"
+filename="font4x9.png"
+high=9
 width=4
+
+[[bitmapfont]]
+name="fontbit5x9"
+filename="fontbit5x9.png"
+high=9
+width=5
 
 [imaged]
 grpc_address="localhost:20002"

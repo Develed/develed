@@ -156,14 +156,13 @@ func generazioneImmagini() {
 
 	clock := clock
 	var loop = []struct {
-		f    LoopFunc
-		time time.Duration
+		f  LoopFunc
+		tt time.Duration
 	}{
-		{clock, 6},
-		{binClock, 6},
-		{date, 6},
-		{Bindate, 6},
-		{saluto, 10},
+		{clock, 60},
+		{binClock, 60},
+		{date, 60},
+		{Bindate, 60},
 	}
 	cont := 0
 	ticker := time.NewTicker(time.Second)
@@ -180,13 +179,16 @@ func generazioneImmagini() {
 			}
 		case tempo := <-ticker.C:
 			fmt.Println(tempo.Sub(now))
-			if tempo.Sub(now) < loop[cont].time {
-				fmt.Println("TEMPO ANCORA NON SCADUTO")
+			tt := loop[cont].tt * time.Second
+
+			fmt.Println(tt)
+
+			if tempo.Sub(now) > tt {
 				appo := loop[cont]
 				cRenderImgChannel <- appo.f()
 			} else {
 				fmt.Println("CAMBIO TURNO")
-				if cont == 4 {
+				if cont == 3 {
 					cont = 0
 				} else {
 					cont = cont + 1
@@ -342,58 +344,6 @@ func Bindate() RenderCtx {
 	}
 	text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
 	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
-}
-
-func saluto() RenderCtx {
-	var err error
-
-	var loc *time.Location
-	txt_color := color.RGBA{255, 0, 0, 255}
-	txt_bg := color.RGBA{0, 0, 0, 255}
-
-	//set timezone,
-	loc, err = time.LoadLocation("Europe/Rome")
-	if err != nil {
-		log.Error("Unable go get time clock..")
-		panic(err)
-	}
-	now := time.Now().In(loc)
-	ore := now.Hour()
-
-	str := "BUONGIORNISSIMO, buon lavoro"
-	gg := now.Weekday()
-	if ore >= 11 {
-		if (gg == time.Wednesday) || (gg == time.Thursday) || (gg == time.Friday) {
-			str = "EI RICORDATI DI ORDINARE IL CIBO! "
-		} else {
-			str = "CIAO, COME STA ANDANDO LA GIORNATA? "
-		}
-	}
-	fmt.Println(str)
-	if ore >= 12 {
-		str = "CIAO, COME STA ANDANDO LA GIORNATA? "
-	}
-	fmt.Println(str)
-	if ore >= 18 {
-		if gg == time.Friday {
-			str = "BUON FINE SETTIMANA, RICORDA DI SEGNARE LE ORE E DI PASSARE DAL NANO VERDE  "
-		}
-	}
-	fmt.Println(str)
-	if ore >= 19 {
-		str = "CIAO, SPERO CHE LA TUA GIORNATA SIA ANDATA BENE "
-	}
-	fmt.Println(str)
-	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.SimboliFont, conf.BitmapFonts)
-	if err != nil {
-		panic(err)
-	}
-	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.SimboliFont, conf.BitmapFonts)
-	if err != nil {
-		panic(err)
-	}
-	text_img, charWidth, err := bitmapfont.Render(str, txt_color, txt_bg, 1, 0)
-	return RenderCtx{text_img, charWidth, 10 * time.Millisecond, "scroll", 50 * time.Millisecond}
 }
 
 type ImageSink interface {
