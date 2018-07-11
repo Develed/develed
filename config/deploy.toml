@@ -3,9 +3,11 @@ grpc_address="localhost:20000"
 
 [textd]
 grpc_address="localhost:20001"
+owm_token=":owm_token:"
 font_path="/usr/share/develed/fonts"
 datetime_font="font4x9"
 bitdatetime_font="fontbit5x9"
+temperature_font="font5x7"
 simboli_font="font5x7"
 show_second=false
 date_stay_time=10 #second

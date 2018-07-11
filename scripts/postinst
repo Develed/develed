@@ -2,10 +2,6 @@
 
 systemctl enable develed
 systemctl enable textd
-systemctl enable imaged
-systemctl enable dspd
 
 systemctl start dspd
 systemctl start textd
-systemctl start imaged
-systemctl start develed

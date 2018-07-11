@@ -2,13 +2,17 @@ package main
 
 import (
 	"bytes"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"image"
 	"image/color"
 	"image/draw"
 	"image/png"
+	"io/ioutil"
 	"net"
+	"net/http"
+	"os"
 	"time"
 
 	bitmapfont "github.com/develed/develed/bitmapfont"
@@ -50,6 +54,10 @@ var cScollText string = "scroll"
 var cFixText string = "fix"
 var cCenterText string = "center"
 var cBlinkText string = "blink"
+
+var currentTemp float64 = 0.0
+
+const OWMUrl = "http://api.openweathermap.org/data/2.5/weather?q=Campi%20Bisenzio,Firenze&units=metric&appid="
 
 func (s *server) Write(ctx context.Context, req *srv.TextRequest) (*srv.TextResponse, error) {
 	var err error
@@ -159,10 +167,10 @@ func generazioneImmagini() {
 		f  LoopFunc
 		tt time.Duration
 	}{
-		{clock, 30 * time.Second},
-		{binClock, 30 * time.Second},
-		{date, 5 * time.Second},
-		//{Bindate, 6000 * time.Second},
+		{binClock, 90 * time.Second},
+		{clock, 5 * time.Second},
+		{date, 2 * time.Second},
+		{temperature, 10 * time.Second},
 	}
 	cont := 0
 	ticker := time.NewTicker(1 * time.Second)
@@ -198,7 +206,6 @@ var txtColor color.RGBA = color.RGBA{13, 25, 64, 128}
 var txtBg color.RGBA = color.RGBA{0, 0, 0, 255}
 
 func binClock() RenderCtx {
-	fmt.Println("clock")
 	var err error
 	var loc *time.Location
 
@@ -208,22 +215,14 @@ func binClock() RenderCtx {
 		log.Error("Unable go get time clock..")
 		panic(err)
 	}
-	now := time.Now().In(loc)
-	time_str := now.Format("15:04")
-	if clockFlag {
-		time_str = now.Format("15 04")
-	}
-	clockFlag = !clockFlag
+
+	time_str := time.Now().In(loc).Format("150405")
 
 	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.BitdatetimeFont, conf.BitmapFonts)
 	if err != nil {
 		panic(err)
 	}
 
-	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.BitdatetimeFont, conf.BitmapFonts)
-	if err != nil {
-		panic(err)
-	}
 	text_img, charWidth, err := bitmapfont.Render(time_str, txtColor, txtBg, 1, 0)
 	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
 }
@@ -252,11 +251,7 @@ func clock() RenderCtx {
 	if err != nil {
 		panic(err)
 	}
-	print(time_str)
-	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.DatetimeFont, conf.BitmapFonts)
-	if err != nil {
-		panic(err)
-	}
+
 	text_img, charWidth, err := bitmapfont.Render(time_str, txtColor, txtBg, 1, 0)
 	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
 }
@@ -279,39 +274,27 @@ func date() RenderCtx {
 	if err != nil {
 		panic(err)
 	}
-	print(time_str)
-	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.DatetimeFont, conf.BitmapFonts)
-	if err != nil {
-		panic(err)
-	}
+
 	text_img, charWidth, err := bitmapfont.Render(time_str, txtColor, txtBg, 1, 0)
 	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
 }
 
-func Bindate() RenderCtx {
-	fmt.Println("clock")
+func temperature() RenderCtx {
 	var err error
-	var loc *time.Location
 
-	//set timezone,
-	loc, err = time.LoadLocation("Europe/Rome")
+	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.TemperatureFont, conf.BitmapFonts)
 	if err != nil {
-		log.Error("Unable go get time clock..")
 		panic(err)
 	}
-	now := time.Now().In(loc)
-	time_str := now.Format("02.01.06")
 
-	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.BitdatetimeFont, conf.BitmapFonts)
-	if err != nil {
-		panic(err)
+	var sign = '+'
+	if currentTemp < 0 {
+		sign = '-'
 	}
-	print(time_str)
-	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.BitdatetimeFont, conf.BitmapFonts)
-	if err != nil {
-		panic(err)
-	}
-	text_img, charWidth, err := bitmapfont.Render(time_str, txtColor, txtBg, 1, 0)
+
+	txt := fmt.Sprintf("%c%2.1fC", sign, currentTemp)
+	text_img, charWidth, err := bitmapfont.Render(txt, txtColor, txtBg, 1, 0)
+
 	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
 }
 
@@ -321,7 +304,6 @@ type ImageSink interface {
 }
 
 func main() {
-
 	var sink ImageSink
 	var err error
 
@@ -330,6 +312,11 @@ func main() {
 	conf, err = config.Load(*cfg)
 	if err != nil {
 		log.Fatalln(err)
+	}
+
+	owm_token := os.Getenv("OWM_API_TOKEN")
+	if owm_token == "" {
+		owm_token = conf.Textd.OWMToken
 	}
 
 	if *debug {
@@ -365,8 +352,40 @@ func main() {
 	go renderLoop(sink)
 	go generazioneImmagini()
 
+	go func() {
+		retrieveTemperature := func() {
+			resp, err := http.Get(OWMUrl + owm_token)
+			if err != nil {
+				log.Errorln(err)
+				return
+			}
+
+			data, err := ioutil.ReadAll(resp.Body)
+			if err != nil {
+				log.Errorln(err)
+				return
+			}
+
+			var jmap map[string]interface{}
+			if err := json.Unmarshal(data, &jmap); err != nil {
+				log.Errorln(err)
+				return
+			}
+
+			currentTemp = jmap["main"].(map[string]interface{})["temp"].(float64)
+		}
+
+		retrieveTemperature()
+
+		for {
+			select {
+			case <-time.After(5 * time.Minute):
+				retrieveTemperature()
+			}
+		}
+	}()
+
 	if err := s.Serve(sock); err != nil {
 		log.Fatalln(err)
 	}
-
 }

@@ -1,7 +1,7 @@
 VERTAG = $(shell grep "Version:" scripts/control | cut -c 10-)
 BUILD = build/
 IPKDIR = build/ipk/
-DAEMONS = textd imaged dspd
+DAEMONS = textd
 TARGETS = bot $(DAEMONS)
 
 # Verbose build?
@@ -17,12 +17,8 @@ all: $(TARGETS)
 
 bot:
 	$Q go build ./cmd/bot
-dspd:
-	$Q go build ./cmd/dspd
 textd:
 	$Q go build ./cmd/textd
-imaged:
-	$Q go build ./cmd/imaged
 fake:
 	$Q go build ./cmd/fake_req
 proto:
@@ -38,14 +34,13 @@ release: all
 	$Q cp scripts/control scripts/postinst scripts/preinst $(BUILD)
 	$Q echo 2.0 > $(BUILD)/debian-binary
 	$Q sed -i "s/:slack_bot_token:/$(SLACK_BOT_TOKEN)/g" $(IPKDIR)/etc/develed.toml
+	$Q sed -i "s/:owm_token:/$(OWM_API_TOKEN)/g" $(IPKDIR)/etc/develed.toml
 	$Q tar czf $(BUILD)/control.tar.gz -C $(BUILD) control postinst preinst
 	$Q tar czf $(BUILD)/data.tar.gz -C $(IPKDIR) .
 	$Q ar r $(BUILD)/develed_$(VERTAG).ipk $(BUILD)/control.tar.gz $(BUILD)/data.tar.gz $(BUILD)/debian-binary
 
 test: all
 	$Q killall $(TARGETS) >/dev/null 2>&1 || true
-	$Q ./dspd -config config/local.toml -debug &
-	$Q ./imaged -config config/local.toml &
 	$Q ./textd -config config/local.toml &
 	$Q sleep 0.5
 	$Q ./bot -config config/local.toml -debug

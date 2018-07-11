@@ -2,5 +2,3 @@
 
 systemctl stop develed >/dev/null 2>&1 || true
 systemctl stop textd >/dev/null 2>&1 || true
-systemctl stop imaged >/dev/null 2>&1 || true
-systemctl stop dspd >/dev/null 2>&1 || true
