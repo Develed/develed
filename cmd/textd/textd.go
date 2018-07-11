@@ -159,13 +159,13 @@ func generazioneImmagini() {
 		f  LoopFunc
 		tt time.Duration
 	}{
-		{clock, 60},
-		{binClock, 60},
-		{date, 60},
-		{Bindate, 60},
+		{clock, 30 * time.Second},
+		{binClock, 30 * time.Second},
+		{date, 5 * time.Second},
+		//{Bindate, 6000 * time.Second},
 	}
 	cont := 0
-	ticker := time.NewTicker(time.Second)
+	ticker := time.NewTicker(1 * time.Second)
 	appo := loop[cont]
 	cRenderImgChannel <- appo.f()
 	now := time.Now()
@@ -178,23 +178,14 @@ func generazioneImmagini() {
 				time.Sleep(cxt.Time)
 			}
 		case tempo := <-ticker.C:
-			fmt.Println(tempo.Sub(now))
-			tt := loop[cont].tt * time.Second
-
-			fmt.Println(tt)
-
-			if tempo.Sub(now) > tt {
+			if (tempo.Sub(now) * time.Microsecond) < (loop[cont].tt * time.Microsecond) {
 				appo := loop[cont]
 				cRenderImgChannel <- appo.f()
 			} else {
-				fmt.Println("CAMBIO TURNO")
-				if cont == 3 {
+				cont = cont + 1
+				if cont == len(loop) {
 					cont = 0
-				} else {
-					cont = cont + 1
 				}
-				appo := loop[cont]
-				cRenderImgChannel <- appo.f()
 				now = time.Now()
 			}
 		}
@@ -202,12 +193,14 @@ func generazioneImmagini() {
 	}
 }
 
+var clockFlag bool = true
+var txtColor color.RGBA = color.RGBA{13, 25, 64, 128}
+var txtBg color.RGBA = color.RGBA{0, 0, 0, 255}
+
 func binClock() RenderCtx {
 	fmt.Println("clock")
 	var err error
 	var loc *time.Location
-	txt_color := color.RGBA{255, 0, 0, 255}
-	txt_bg := color.RGBA{0, 0, 0, 255}
 
 	//set timezone,
 	loc, err = time.LoadLocation("Europe/Rome")
@@ -215,32 +208,23 @@ func binClock() RenderCtx {
 		log.Error("Unable go get time clock..")
 		panic(err)
 	}
-	var flag bool = true
-	var show_date int = 30
 	now := time.Now().In(loc)
-	time_str := ""
-	if now.Unix()%int64(conf.Textd.DateStayTime) == 0 && (show_date <= 0) {
-		time_str = now.Format("02.01.06")
-		show_date = 30
-	} else {
-		flag = !flag
-		time_str = now.Format("15:04")
-		if flag {
-			time_str = now.Format("15 04")
-		}
-		show_date--
+	time_str := now.Format("15:04")
+	if clockFlag {
+		time_str = now.Format("15 04")
+	}
+	clockFlag = !clockFlag
+
+	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.BitdatetimeFont, conf.BitmapFonts)
+	if err != nil {
+		panic(err)
 	}
 
 	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.BitdatetimeFont, conf.BitmapFonts)
 	if err != nil {
 		panic(err)
 	}
-	print(time_str)
-	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.BitdatetimeFont, conf.BitmapFonts)
-	if err != nil {
-		panic(err)
-	}
-	text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
+	text_img, charWidth, err := bitmapfont.Render(time_str, txtColor, txtBg, 1, 0)
 	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
 }
 
@@ -248,8 +232,6 @@ func clock() RenderCtx {
 	fmt.Println("clock")
 	var err error
 	var loc *time.Location
-	txt_color := color.RGBA{255, 0, 0, 255}
-	txt_bg := color.RGBA{0, 0, 0, 255}
 
 	//set timezone,
 	loc, err = time.LoadLocation("Europe/Rome")
@@ -257,21 +239,14 @@ func clock() RenderCtx {
 		log.Error("Unable go get time clock..")
 		panic(err)
 	}
-	var flag bool = true
-	var show_date int = 30
+
 	now := time.Now().In(loc)
 	time_str := ""
-	if now.Unix()%int64(conf.Textd.DateStayTime) == 0 && (show_date <= 0) {
-		time_str = now.Format("02.01.06")
-		show_date = 30
-	} else {
-		flag = !flag
-		time_str = now.Format("15:04")
-		if flag {
-			time_str = now.Format("15 04")
-		}
-		show_date--
+	time_str = now.Format("15:04")
+	if clockFlag {
+		time_str = now.Format("15 04")
 	}
+	clockFlag = !clockFlag
 
 	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.DatetimeFont, conf.BitmapFonts)
 	if err != nil {
@@ -282,7 +257,7 @@ func clock() RenderCtx {
 	if err != nil {
 		panic(err)
 	}
-	text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
+	text_img, charWidth, err := bitmapfont.Render(time_str, txtColor, txtBg, 1, 0)
 	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
 }
 
@@ -290,8 +265,6 @@ func date() RenderCtx {
 	fmt.Println("clock")
 	var err error
 	var loc *time.Location
-	txt_color := color.RGBA{255, 0, 0, 255}
-	txt_bg := color.RGBA{0, 0, 0, 255}
 
 	//set timezone,
 	loc, err = time.LoadLocation("Europe/Rome")
@@ -300,8 +273,7 @@ func date() RenderCtx {
 		panic(err)
 	}
 	now := time.Now().In(loc)
-	time_str := ""
-	time_str = now.Format("02.01.06")
+	time_str := now.Format("02.01.06")
 
 	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.DatetimeFont, conf.BitmapFonts)
 	if err != nil {
@@ -312,7 +284,7 @@ func date() RenderCtx {
 	if err != nil {
 		panic(err)
 	}
-	text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
+	text_img, charWidth, err := bitmapfont.Render(time_str, txtColor, txtBg, 1, 0)
 	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
 }
 
@@ -320,8 +292,6 @@ func Bindate() RenderCtx {
 	fmt.Println("clock")
 	var err error
 	var loc *time.Location
-	txt_color := color.RGBA{255, 0, 0, 255}
-	txt_bg := color.RGBA{0, 0, 0, 255}
 
 	//set timezone,
 	loc, err = time.LoadLocation("Europe/Rome")
@@ -330,8 +300,7 @@ func Bindate() RenderCtx {
 		panic(err)
 	}
 	now := time.Now().In(loc)
-	time_str := ""
-	time_str = now.Format("02.01.06")
+	time_str := now.Format("02.01.06")
 
 	err = bitmapfont.Init(conf.Textd.FontPath, conf.Textd.BitdatetimeFont, conf.BitmapFonts)
 	if err != nil {
@@ -342,7 +311,7 @@ func Bindate() RenderCtx {
 	if err != nil {
 		panic(err)
 	}
-	text_img, charWidth, err := bitmapfont.Render(time_str, txt_color, txt_bg, 1, 0)
+	text_img, charWidth, err := bitmapfont.Render(time_str, txtColor, txtBg, 1, 0)
 	return RenderCtx{text_img, charWidth, 100 * time.Millisecond, "center", 500 * time.Millisecond}
 }
 
@@ -387,12 +356,6 @@ func main() {
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	// conn, err := grpc.Dial(conf.DSPD.GRPCServerAddress, grpc.WithInsecure())
-	// if err != nil {
-	// 	log.Fatalln(err)
-	// }
-	// defer conn.Close()
 
 	s := grpc.NewServer()
 	drawing_srv := &server{sink: srv.NewImageSinkClient(nil)}
