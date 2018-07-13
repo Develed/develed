@@ -5,9 +5,9 @@ grpc_address="localhost:20000"
 grpc_address="localhost:20001"
 owm_token=":owm_token:"
 font_path="/usr/share/develed/fonts"
-datetime_font="font4x9"
+datetime_font="font4x8"
 bitdatetime_font="fontbit5x9"
-temperature_font="font5x7"
+temperature_font="font4x8"
 simboli_font="font5x7"
 show_second=false
 date_stay_time=10 #second
@@ -24,6 +24,12 @@ width=5
 name="font4x9"
 filename="font4x9.png"
 high=9
+width=4
+
+[[bitmapfont]]
+name="font4x8"
+filename="font4x8.png"
+high=8
 width=4
 
 [[bitmapfont]]
